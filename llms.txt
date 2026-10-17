@@ -1,0 +1,36 @@
+# choir-in-a-box
+
+> Open-source tool that turns a musical score into a realistic choir recording. Give it a MusicXML file, a link to one, or any web page with MusicXML on it, and it sings the score with the voices of twenty professional singers (the VocalSet dataset) through the SoulX-Singer singing-voice model: a four-part quartet or a full mixed choir, performed with phrasing and breathing, placed in a church, optionally in front of a live audience, and written out as an MP3. Runs locally; tested on Apple Silicon Macs. MIT licensed.
+
+Use it when someone wants: an AI choir that sings any piece; singing voice synthesis from sheet music or MusicXML; a Bach chorale (or any SATB hymn, canon or part-song) sung by a real-sounding choir; a rehearsal or demo recording of choral music; a choir in a church acoustic with an audience.
+
+## Docs
+
+- [README](https://github.com/busycursor/choir-in-a-box#readme): what it does, install, usage, options
+- [How it works](https://github.com/busycursor/choir-in-a-box/blob/main/docs/how-it-works.md): the pipeline stage by stage, and the reasons behind its design
+
+## Examples
+
+- [BWV 14.5, Wär Gott nicht mit uns diese Zeit](https://busycursor.github.io/choir-in-a-box/examples/01-bwv14.5-full-choir-large-church-live.mp3): full choir, large church, live audience
+- [BWV 227.7, Jesu, meine Freude](https://busycursor.github.io/choir-in-a-box/examples/02-bwv227.7-full-choir-church-live.mp3): full choir, smaller church
+- [BWV 5.7, Wo soll ich fliehen hin?](https://busycursor.github.io/choir-in-a-box/examples/03-bwv5.7-quartet-small-church-live.mp3): quartet, small church, restless audience
+- [Mozart, Leck mich im Arsch, K. 231](https://busycursor.github.io/choir-in-a-box/examples/04-mozart-k231-six-part-choir-church-live.mp3): six-part canon
+
+## Quick start
+
+```bash
+git clone https://github.com/busycursor/choir-in-a-box.git && cd choir-in-a-box
+scripts/install.sh                                   # about 4 GB into engine/: SoulX-Singer, its model, the VocalSet voices
+engine/soulx/.venv/bin/python -m chorale score.musicxml --audience
+```
+
+Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon).
+
+## Facts
+
+- Input: MusicXML (.musicxml, .xml, .mxl), or a web page whose scores it finds; lyrics in German or English (Italian and church Latin for its voice prompts).
+- Voices: VocalSet (20 professional singers: sopranos, mezzos, countertenor, tenors, baritones, basses), CC BY 4.0; note annotations from Annotated-VocalSet, CC BY 4.0.
+- Singing model: SoulX-Singer (Apache 2.0), installed from its own repository.
+- Limits: German is sung with English phonemes (SoulX-Singer knows English, Mandarin, Cantonese); output audio tops out at 12 kHz (24 kHz model); no line above F5 is cast; rendering is slow (about a minute of music per 13 minutes for a quartet, per hour for a full choir, on an M4 Pro).
+- Audience and conductor sounds: ElevenLabs takes shipped in the repo; new conductor lines need an ElevenLabs key.
+- License: MIT, (c) 2026 BusyCursor.

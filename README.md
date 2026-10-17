@@ -68,6 +68,10 @@ Score → parts (`score_parts.py`: repeats, lyrics laid on every part, pronuncia
 - Voices: [VocalSet](https://zenodo.org/records/1442513), Wilkins, Seetharaman, Wahl and Pardo, ISMIR 2018, and its note annotations, [Annotated-VocalSet](https://zenodo.org/records/7061507), Faghih and Timoney, *Applied Sciences* 2022. (All CC BY 4.0)
 - SFX and conductor are ElevenLabs.
 
+## Find this
+
+An open-source AI choir: singing voice synthesis that turns sheet music (MusicXML) into a realistic choir recording, from a four-part quartet to a full SATB choir, with a church acoustic and an optional live audience. For Bach chorales, hymns, canons and part-songs; for hearing a choral score before rehearsal, or a demo recording of one. A summary for language models and AI assistants is in [llms.txt](https://busycursor.github.io/choir-in-a-box/llms.txt).
+
 ## License
 
 MIT, (c) 2026 BusyCursor: free to use and modify, keeping the copyright notice. SoulX-Singer and VocalSet keep their own licenses (above).

@@ -1,0 +1,19 @@
+# The GitHub Pages site (the README, the examples, llms.txt): search metadata and a sitemap
+title: choir-in-a-box
+description: "Give it a score, get back a choir singing it: an open-source AI choir that sings any MusicXML with professional voices, in a church, with an audience. Runs locally."
+lang: en
+url: https://busycursor.github.io
+baseurl: /choir-in-a-box
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+include:
+  - llms.txt
+exclude:
+  - engine
+  - tests
+  - chorale
+  - scripts
+  - voices
+  - choirs
+  - requirements.txt
