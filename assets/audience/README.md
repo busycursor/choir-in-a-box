@@ -9,3 +9,7 @@ ElevenLabs sound effects (eleven_text_to_sound_v2), generated from the prompts i
   best with the next piece starting while it's still trailing off.
 - `applause_*` is the normal ending; `applause_hesitant_*` starts slowly, as
   after a sacred piece; `applause_finale_*` has cheering, for a last piece.
+- `fussing_*` and `crying_*` are babies, heard only in a rowdy hall (liveliness
+  0.7 and up), at any moment, music or not.
+- Phones aren't kept here: they're whatever ringtones are in
+  `engine/audience/ringtones/` (none there, no phone).

@@ -176,3 +176,32 @@ def test_the_conductor_is_found_or_designed(monkeypatch):
     assert conductor.voice_id() == 'new' and calls[-1] == '/v1/text-to-voice'   # one that doesn't designs him from the brief
     monkeypatch.setenv('CONDUCTOR_VOICE_ID', 'chosen')
     assert conductor.voice_id() == 'chosen'
+
+
+def test_babies_and_phones_only_in_a_rowdy_hall(tmp_path, monkeypatch):
+    import soundfile as sf
+    from chorale import ringtones
+    phrases = [[a, a + 9.5] for a in np.arange(0.0, 110.0, 10.0)]
+    heard = lambda l: {kind for seed in range(8) for kind in (lambda e: (audience.live(
+        music(120.0), phrases, 0.5, sounds(tmp_path), seed=seed, liveliness=l, events=e), [k for _, k in e])[1])([])}
+    monkeypatch.setattr(ringtones, 'DIR', tmp_path / 'none')
+    assert 'phone' not in heard(1.0)                             # no ringtones, no phone
+    (tmp_path / 'rings').mkdir()
+    sf.write(tmp_path / 'rings' / 'tone.wav', 0.5 * np.sin(np.arange(SR) / 3), SR)
+    monkeypatch.setattr(ringtones, 'DIR', tmp_path / 'rings')
+    assert not heard(0.65) & {'fussing baby', 'crying baby', 'phone'}
+    assert {'fussing baby', 'crying baby', 'phone', 'phone silenced'} <= heard(1.0)
+
+
+def test_a_phone_is_cut_off_into_its_second_ring(tmp_path, monkeypatch):
+    import soundfile as sf
+    from chorale import ringtones
+    tone = np.sin(2 * np.pi * 1000 * np.arange(2 * ringtones.SR) / ringtones.SR) * 0.5
+    sf.write(tmp_path / 'tone.wav', tone, ringtones.SR)
+    monkeypatch.setattr(ringtones, 'DIR', tmp_path)
+    [f] = ringtones.tones()
+    x = ringtones.call(f)[:, 0]
+    ring = len(ringtones.ring(f))
+    live = np.flatnonzero(np.abs(x) > 1e-4)
+    assert ring < live[-1] < 2 * ring                 # past the first ring, not through the second
+    assert len(x) - live[-1] > 0.25 * ringtones.SR    # then silence

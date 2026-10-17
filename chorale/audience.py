@@ -5,14 +5,17 @@ then one small sound far back in a longer break between phrases; and applause
 once the last chord has rung away. It has to suggest a performance, not a
 ward: around the music the hall is audibly alive, during it nearly silent,
 every sound distant and soft, most breaks left empty, and nothing landing
-while anyone is singing.
+while anyone is singing. A badly behaved audience (from 0.7) has babies in it
+fussing and crying, and (from 0.8, now and then) a phone that rings once and is
+grabbed and silenced into its second ring.
 
 The sounds are ElevenLabs sound effects, made as takes to listen to
 (generate: engine/audience/takes/, with a page to audition them); only the
 ones picked by ear are used, kept in assets/audience/ as <kind>_a.mp3,
 <kind>_b.mp3 and so on (keep copies a pick there). The room's air is
 synthesized instead: ElevenLabs room tones come back near-silent with codec
-noise.
+noise. Phones are whatever ringtones are in engine/audience/ringtones/, used
+as they are (ringtones.py); with none there, no phone goes off.
 
 Usage:
   ELEVENLABS_API_KEY=... python -m chorale.audience generate [--more=<kind>]
@@ -25,6 +28,8 @@ from pathlib import Path
 import librosa
 import numpy as np
 import pyloudnorm
+
+from chorale import ringtones
 
 ROOT = Path(__file__).resolve().parent.parent
 TAKES = ROOT / 'engine' / 'audience' / 'takes'
@@ -47,6 +52,10 @@ KINDS = {
     'baton':    (f'A thin wooden conductor\'s baton picked up from a metal music stand, one faint light click, one-shot, {WHERE}', 1.0, 4),
     'score_page': (f'One large page of a bound score turned on a music stand, soft paper, one-shot, {WHERE}', 1.5, 4),
     'stand':    (f'A metal music stand nudged slightly, one faint creak, one-shot, {WHERE}', 1.0, 3),
+    'fussing':  ('One baby fussing in a parent\'s arms: a few soft unhappy whimpers and a short grizzling cry, '
+                 'then quieting, one-shot, distant, in a large reverberant stone church, no speech, no music', 4.0, 4),
+    'crying':   ('One baby starting to cry, wailing for a few seconds, then muffled and fading away as it is '
+                 'carried out, distant, in a large reverberant stone church, no speech, no music', 7.0, 4),
     'false_start': ('Scattered clapping begins hesitantly from a few people spread across an audience of 150, '
                     'a few more join for a moment, then it stops abruptly and awkwardly into silence, '
                     'distant, in a large reverberant stone church, no voices, no music', 4.0, 4),
@@ -69,6 +78,11 @@ def _sound(text: str, seconds: float) -> bytes:
 
 def generate(more: str | None = None) -> Path:
     """Review takes of every kind not made yet (or four more of one), then a page to audition them."""
+    env = ROOT / '.env'   # the API key lives here, not in the shell (ignored by git)
+    for line in env.read_text().splitlines() if env.exists() else []:
+        k, _, v = line.partition('=')
+        if k.strip() and not line.lstrip().startswith('#'):
+            os.environ.setdefault(k.strip(), v.strip().strip('"\''))
     TAKES.mkdir(parents=True, exist_ok=True)
     for kind, (text, seconds, count) in KINDS.items():
         if more and kind != more:
@@ -82,6 +96,9 @@ def generate(more: str | None = None) -> Path:
             f = TAKES / f'{kind}_{t}.mp3'
             if f.exists():
                 continue
+            if 'ELEVENLABS_API_KEY' not in os.environ:
+                print(f'{kind}: needs ELEVENLABS_API_KEY', flush=True)
+                break
             print(f.name, flush=True)
             f.write_bytes(_sound(text, seconds))
     rows = []
@@ -89,12 +106,12 @@ def generate(more: str | None = None) -> Path:
     for kind in KINDS:
         if kind in approved:
             continue   # picked already: the page shows only what's still to choose
-        files = sorted(TAKES.glob(f'{kind}_*.mp3'))
+        files = sorted(TAKES.glob(f'{kind}_?.mp3'))
         rows.append(f'<h2>{kind}</h2>' + ''.join(
             f'<div><code>{f.stem}</code> <audio controls preload="none" src="{f.name}"></audio></div>' for f in files))
     page = TAKES / 'index.html'
     page.write_text('<!doctype html><meta charset="utf-8"><title>Audience takes</title>'
-                    '<style>body{font:15px system-ui;margin:2em} div{display:flex;gap:1em;align-items:center;margin:.3em 0} code{width:7em}</style>'
+                    '<style>body{font:15px system-ui;margin:2em} div{display:flex;gap:1em;align-items:center;margin:.3em 0} code{width:11em}</style>'
                     '<h1>Audience takes still to pick</h1>'
                     f'<p>Already picked (hidden here): {", ".join(sorted(approved)) or "none"}.</p>'
                     '<p>Played as generated; in the mix each sits far back and much quieter.</p>' + ''.join(rows))
@@ -148,7 +165,8 @@ REACT_S = 0.6        # seconds before anyone reacts to the first note
 LEVEL = {'walk_on': -50, 'risers': -50, 'folders': -50, 'settle': -48, 'seats': -54,
          'cough': -47, 'rustle': -52, 'pew': -53, 'false_start': -40,
          'applause': -28, 'applause_hesitant': -28, 'applause_finale': -27,
-         'baton': -60, 'score_page': -58, 'stand': -61}
+         'baton': -60, 'score_page': -58, 'stand': -61,
+         'fussing': -49, 'crying': -45, 'phone': -43}
 CONDUCTOR_LUFS = -27   # his line, room and all: up by the choir, not on a microphone
 UNSETTLED_DB = 3       # the hall while he talks: nobody quite listening yet
 # The intro around his line: he starts a moment in, then a hush, a page, the baton, the first note
@@ -177,6 +195,12 @@ LET_GO_S = 2.0       # seconds into the applause before people are fully at ease
 TAIL_S = 0.5         # the track ends this long after the last clap: the applause's end is the end
 RELEASE_GAP = 0.8    # seconds at least between the sounds they let go of: spread out, not all at once
 BATON_CHANCE, PREP_CHANCE = 0.8, 0.5   # the conductor, speaking or not: baton up before the first note, and a page or the stand
+BABIES_FROM = 0.7    # liveliness from which there are babies in the hall
+def babies_per_min(l): return 0.0 if l < BABIES_FROM else 0.4 + 2.6 * (l - BABIES_FROM) / (1 - BABIES_FROM)
+def crying_share(l): return 0.5 * max(0.0, l - BABIES_FROM) / (1 - BABIES_FROM)   # of those, the ones that cry
+PHONE_FROM = 0.8     # liveliness from which a phone may go off while they sing
+def phone_chance(l): return 0.0 if l < PHONE_FROM else 0.2 + 0.4 * (l - PHONE_FROM) / (1 - PHONE_FROM)
+PHONE_TAIL = 0.3     # seconds of silence after the cut in each phone take (ringtones.call)
 ROOM_TONE, HISS = -60, -72   # LUFS of the church's air and the microphones' noise floor
 
 
@@ -387,6 +411,26 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
                 if x is not None:
                     at = rng.uniform(start, last_end)
                     place(out, x, at, rng.uniform(-0.9, 0.9)); log(at, 'cough (while they sing)')
+        # Babies don't wait for a break: fussing or crying any time, the music or not
+        for _ in range(rng.poisson(crowd * babies_per_min(l) * clap_end / 60)):
+            kind = 'crying' if rng.random() < crying_share(l) else 'fussing'
+            x = pick(kind, up)
+            if x is not None:
+                at = rng.uniform(0, clap_end)
+                place(out, x, at, rng.uniform(-0.9, 0.9)); log(at, f'{kind} baby')
+        # A phone, once at most: it rings while they sing, and is grabbed and
+        # cut off into its second ring, with a rustle of whoever grabbed it
+        phones = ringtones.tones()
+        if phones and rng.random() < phone_chance(l):
+            x = ringtones.call(phones[rng.integers(len(phones))], seed=int(rng.integers(1 << 30)))
+            x = _at(into_room(librosa.resample(x.T, orig_sr=ringtones.SR, target_sr=SR).T, ir), LEVEL['phone'] + up)
+            at = rng.uniform(start + 0.2 * span, start + 0.7 * span)
+            side = rng.uniform(-0.8, 0.8)
+            place(out, x, at, side); log(at, 'phone')
+            cut = at + (len(x) - len(ir) + 1) / SR - PHONE_TAIL
+            hand = pick('rustle', up + 3)
+            if hand is not None:
+                place(out, end_fade(hand, 0.15), cut - 0.15, side); log(cut, 'phone silenced')
         # Once the applause starts, what people held in: let go through it and
         # after, spread out at a natural pace (never in the silence before it)
         span_end = clap_end - 1.0   # everything let go of lands inside the applause, none after it
