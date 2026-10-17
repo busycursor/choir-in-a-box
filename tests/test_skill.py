@@ -47,3 +47,13 @@ def test_a_very_weak_player_stops_and_searches(parts):
 def test_any_performance_is_reproducible(parts):
     for level in (0.05, 0.3, 0.6, 0.95):
         assert performed(parts, 'harpsichord', level, seed=4) == performed(parts, 'harpsichord', level, seed=4)
+
+
+def test_a_player_who_cant_manage_it_fumbles_throughout(parts):
+    weak = performed(parts, 'harpsichord', 0.05, seed=3)
+    shaky = performed(parts, 'harpsichord', 0.3, seed=3)
+    written = sorted(n.start for n in performed(parts, 'harpsichord', 0.6, seed=3))
+    late = lambda notes: np.mean([min(abs(np.array(written) - n.start)) > 0.15 for n in notes])
+    assert late(weak) > 2 * late(shaky)                     # off the beat everywhere, not in one place
+    assert len(weak) < 0.8 * len(performed(parts, 'harpsichord', 0.6, seed=3))   # notes and chords dropped
+    assert np.mean([n.velocity for n in weak]) < np.mean([n.velocity for n in shaky])   # timid

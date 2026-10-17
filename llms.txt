@@ -28,7 +28,7 @@ scripts/install.sh                                   # about 4 GB into engine/: 
 engine/soulx/.venv/bin/python -m chorale score.musicxml --audience
 ```
 
-Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon), `--accompaniment=organ|harpsichord|piano` (with `--accompaniment-style=continuo|doubling`, for the organ `--registration=...`, and `--skill=0..1` for how well the accompanist plays: 0.6 competent, higher ornaments more, lower makes mistakes, near 0 breaks down).
+Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon), `--accompaniment=organ|harpsichord|piano` (with `--accompaniment-style=continuo|doubling`, for the organ `--registration=...`, and `--skill=0..1` for how well the accompanist plays: 0.6 competent, higher ornaments more, lower makes mistakes, near 0 fumbles throughout and breaks down).
 
 ## Facts
 
