@@ -6,10 +6,10 @@ Put in a webpage or a score and get back a choir singing it, either in four part
 
 | | |
 |---|---|
-| [BWV 14.5, *Wär Gott nicht mit uns diese Zeit*](examples/01-bwv14.5-full-choir-large-church-live.mp3) | full choir, large church, a live audience |
-| [BWV 227.7, *Jesu, meine Freude*](examples/02-bwv227.7-full-choir-church-live.mp3) | full choir, a smaller church |
-| [BWV 5.7, *Wo soll ich fliehen hin?*](examples/03-bwv5.7-quartet-small-church-live.mp3) | quartet, a small church, a restless audience |
-| [Mozart, *Leck mich im Arsch*, K. 231](examples/04-mozart-k231-six-part-choir-church-live.mp3) | a famous six-part canon |
+| [BWV 14.5, *Wär Gott nicht mit uns diese Zeit*](https://busycursor.github.io/choir-in-a-box/examples/01-bwv14.5-full-choir-large-church-live.mp3) | full choir, large church, a live audience |
+| [BWV 227.7, *Jesu, meine Freude*](https://busycursor.github.io/choir-in-a-box/examples/02-bwv227.7-full-choir-church-live.mp3) | full choir, a smaller church |
+| [BWV 5.7, *Wo soll ich fliehen hin?*](https://busycursor.github.io/choir-in-a-box/examples/03-bwv5.7-quartet-small-church-live.mp3) | quartet, a small church, a restless audience |
+| [Mozart, *Leck mich im Arsch*, K. 231](https://busycursor.github.io/choir-in-a-box/examples/04-mozart-k231-six-part-choir-church-live.mp3) | a famous six-part canon |
 
 ## What it does
 
