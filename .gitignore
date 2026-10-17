@@ -1,4 +1,4 @@
-engine/
+engine
 temp/
 __pycache__/
 .pytest_cache/

@@ -163,11 +163,27 @@ def staggered(stems: list[tuple[np.ndarray, Seat, str]], rows: dict, offset: flo
     return out
 
 
+def place_stereo(stereo: np.ndarray, seat: Seat) -> tuple[np.ndarray, float]:
+    """An instrument's stereo sound set where it stands: its image narrowed and
+    moved toward its pan, set back like a singer (level, EQ, more room)."""
+    l, r = stereo[:, 0], stereo[:, 1]
+    l, r = [shelf(shelf(x, 200, 2 - 4 * seat.distance, high=False), 5000, -3 * seat.distance, high=True) for x in (l, r)]
+    width = 1 - 0.5 * seat.distance                                     # further away, narrower
+    mid, side = (l + r) / 2, (l - r) / 2 * width
+    angle = (seat.pan + 1) * np.pi / 4
+    gl, gr = np.cos(angle) * np.sqrt(2), np.sin(angle) * np.sqrt(2)
+    out = np.stack([(mid + side) * gl, (mid - side) * gr], 1)
+    return out * 10 ** (DISTANCE_LEVEL_DB * (seat.distance - TYPICAL_DISTANCE) / 20), DISTANCE_ROOM_DB * (seat.distance - TYPICAL_DISTANCE)
+
+
 def mix(stems: list[tuple[np.ndarray, Seat, str]], room: Room, phrases: list[list[float]] | None = None,
-        offset: float = 0.0, rows: dict | None = None) -> np.ndarray:
+        offset: float = 0.0, rows: dict | None = None, extras: list | None = None) -> np.ndarray:
     """Sections breathing in turn, every part balanced, the choir phrasing
     together, every singer at their seat, into the room; stereo, peaking at
-    -1 dBFS at most."""
+    -1 dBFS at most. extras are instruments, (stereo, Seat, dB under the choir):
+    in the same room, but no breathing and no vocal phrasing (their dynamics
+    are their own). An extra may add a 4th item, dB more into the room (an organ
+    fills a church)."""
     ir = impulse(room)
     calib = calibration(ir)
     if rows:
@@ -176,10 +192,19 @@ def mix(stems: list[tuple[np.ndarray, Seat, str]], room: Room, phrases: list[lis
     if phrases:
         shape = phrasing(max(len(s) for s, _ in placed), phrases, offset)
         placed = [(s * shape[:len(s)], seat) for s, seat in placed]
-    n = max(len(s) for s, _ in placed) + len(ir)
+    n = max([len(s) for s, _ in placed] + [len(e[0]) for e in (extras or [])]) + len(ir)
     dry, send = np.zeros((n, 2)), np.zeros((n, 2))
     for stem, seat in placed:
         d, send_db = place(stem, seat)
+        dry[:len(d)] += d
+        send[:len(d)] += d * 10 ** (send_db / 20)
+    choir_lufs = loudness(dry[:max(len(s) for s, _ in placed)])
+    for extra in (extras or []):
+        stereo, seat, under_db = extra[:3]
+        fills_room_db = extra[3] if len(extra) > 3 else 0.0   # a big instrument fills the building more than its seat alone would
+        d, send_db = place_stereo(stereo, seat)
+        send_db += fills_room_db
+        d = d * 10 ** ((choir_lufs + under_db - loudness(d)) / 20)
         dry[:len(d)] += d
         send[:len(d)] += d * 10 ** (send_db / 20)
     gain = 10 ** ((room.wet_db + calib) / 20)

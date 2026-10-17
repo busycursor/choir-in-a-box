@@ -1,8 +1,8 @@
 # choir-in-a-box
 
-> Open-source tool that turns a musical score into a realistic choir recording. Give it a MusicXML file, a link to one, or any web page with MusicXML on it, and it sings the score with the voices of twenty professional singers (the VocalSet dataset) through the SoulX-Singer singing-voice model: a four-part quartet or a full mixed choir, performed with phrasing and breathing, placed in a church, optionally in front of a live audience, and written out as an MP3. Runs locally; tested on Apple Silicon Macs. MIT licensed.
+> Open-source tool that turns a musical score into a realistic choir recording. Give it a MusicXML file, a link to one, or any web page with MusicXML on it, and it sings the score with the voices of twenty professional singers (the VocalSet dataset) through the SoulX-Singer singing-voice model: a four-part quartet or a full mixed choir, performed with phrasing and breathing, placed in a church, optionally accompanied by an organ, harpsichord or piano and in front of a live audience, and written out as an MP3. Runs locally; tested on Apple Silicon Macs. MIT licensed.
 
-Use it when someone wants: an AI choir that sings any piece; singing voice synthesis from sheet music or MusicXML; a Bach chorale (or any SATB hymn, canon or part-song) sung by a real-sounding choir; a rehearsal or demo recording of choral music; a choir in a church acoustic with an audience.
+Use it when someone wants: an AI choir that sings any piece; a choir with organ, harpsichord or piano accompaniment; a realized figured bass / continuo part; singing voice synthesis from sheet music or MusicXML; a Bach chorale (or any SATB hymn, canon or part-song) sung by a real-sounding choir; a rehearsal or demo recording of choral music; a choir in a church acoustic with an audience.
 
 ## Docs
 
@@ -24,7 +24,7 @@ scripts/install.sh                                   # about 4 GB into engine/: 
 engine/soulx/.venv/bin/python -m chorale score.musicxml --audience
 ```
 
-Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon).
+Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon), `--accompaniment=organ|harpsichord|piano` (with `--accompaniment-style=continuo|doubling` and, for the organ, `--registration=...`).
 
 ## Facts
 
@@ -32,5 +32,6 @@ Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|
 - Voices: VocalSet (20 professional singers: sopranos, mezzos, countertenor, tenors, baritones, basses), CC BY 4.0; note annotations from Annotated-VocalSet, CC BY 4.0.
 - Singing model: SoulX-Singer (Apache 2.0), installed from its own repository.
 - Limits: German is sung with English phonemes (SoulX-Singer knows English, Mandarin, Cantonese); output audio tops out at 12 kHz (24 kHz model); no line above F5 is cast; rendering is slow (about a minute of music per 13 minutes for a quartet, per hour for a full choir, on an M4 Pro).
+- Accompaniment: read from the score. A continuo part's figured bass is realized by thoroughbass rules (no parallel fifths or octaves, doubling rules, the right hand under the melody); a chorale without one is realized from its own four-part harmony. The organ is synthesized (Great, enclosed Swell and Pedal; principals, flutes, strings, reeds, mixtures; couplers, swell box, tremulant; registrations changing with the form). The harpsichord (Flemish) and piano (Steinway B, three dynamic layers) are VCSL samples (CC0) fetched by the installer, played with arpeggiation, ornaments (trills into cadences, passing notes, acciaccaturas) and phrasing. All seeded and reproducible, placed in the room with the choir.
 - Audience and conductor sounds: ElevenLabs takes shipped in the repo; new conductor lines need an ElevenLabs key.
 - License: MIT, (c) 2026 BusyCursor.

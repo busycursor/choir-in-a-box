@@ -27,8 +27,8 @@ def title_of(render: dict, parts: dict) -> tuple[str, str, str]:
 CHOIRS = {'full': 'full choir', 'quartet': 'quartet', 'six': 'six-part choir'}
 
 
-def name_of(work: str, title: str, choir: str, venue: str, live: bool, composer: str = '') -> str:
-    what = ', '.join([CHOIRS.get(choir, choir), venue.replace('_', ' ')] + (['live'] if live else []))
+def name_of(work: str, title: str, choir: str, venue: str, live: bool, composer: str = '', accompaniment: str | None = None) -> str:
+    what = ', '.join([CHOIRS.get(choir, choir), venue.replace('_', ' ')] + ([accompaniment] if accompaniment else []) + (['live'] if live else []))
     stem = f'{work} - {title}' if work else (f'{composer.split()[-1]} - {title}' if composer else title)
     name = re.sub(r'[?*"]', '', f'{stem} ({what})')     # not allowed in file names: dropped
     return re.sub(r'[/\\:<>|]', '-', name)                # or, where they separate things, a dash
@@ -43,13 +43,39 @@ def mp3(wav: np.ndarray, sr: int, path: Path, tags: dict) -> Path:
     return path
 
 
+def accompaniment_parts(render_dir: Path, render: dict, parts: dict) -> dict:
+    """The parts with every note in score beats, which the accompaniment plays
+    from. Renders made before that was recorded get their parts rebuilt from
+    the score with the options they were sung with, checked against what was sung."""
+    if 'events' in parts:
+        return parts
+    from chorale import pipeline
+    o = render.get('options', {})
+    rebuilt = pipeline.build_parts(Path(render['score']), render_dir / 'parts-with-beats.json', bpm=render.get('bpm'),
+                                   lang=render.get('lang'), literal=o.get('literal', False), stop=o.get('stop'),
+                                   transpose=o.get('transpose'))
+    if rebuilt['parts'] != parts['parts']:
+        raise ValueError(f'{render_dir}: its parts can\'t be rebuilt to match what was sung (sing it again to accompany it)')
+    return rebuilt
+
+
 def finish(render_dir: Path, venue: str = 'large_church', liveliness: float | None = None, applause: str = 'applause',
-           conductor_line: str | None = None, seed: int = 0) -> Path:
-    """Mix a render in its venue (live at `liveliness` if given) and write the MP3; returns its path."""
+           conductor_line: str | None = None, seed: int = 0, accompaniment: str | None = None,
+           accompaniment_style: str | None = None, registration: str | None = None) -> Path:
+    """Mix a render in its venue (with an accompaniment, and live at
+    `liveliness`, if asked) and write the MP3; returns its path."""
     render = json.loads((render_dir / 'render.json').read_text())
     parts = json.loads((render_dir / 'parts.json').read_text())
     name, crowd = room.VENUES[venue]
-    music = room.mix(room.stems_of(render_dir), room.ROOMS[name], parts.get('phrases'), LEAD_IN, parts['parts'])
+    extras = []
+    if accompaniment:
+        from chorale import accompany
+        parts = accompaniment_parts(render_dir, render, parts)
+        key = None
+        if str(render.get('score', '')).endswith('.json'):
+            key = json.loads(Path(render['score']).read_text()).get('key')
+        extras.append(accompany.render(parts, accompaniment, accompaniment_style, registration, seed, key))
+    music = room.mix(room.stems_of(render_dir), room.ROOMS[name], parts.get('phrases'), LEAD_IN, parts['parts'], extras=extras)
     out = music
     if liveliness is not None:
         intro = None
@@ -62,6 +88,6 @@ def finish(render_dir: Path, venue: str = 'large_church', liveliness: float | No
         out = audience.live(music, parts.get('phrases') or [], LEAD_IN, audience.picks(), seed=seed,
                             liveliness=liveliness, applause_kind=applause, room_name=name, intro=intro, crowd=crowd)
     work, title, composer = title_of(render, parts)
-    file = render_dir / f'{name_of(work, title, render.get("choir", "full"), venue, liveliness is not None, composer)}.mp3'
+    file = render_dir / f'{name_of(work, title, render.get("choir", "full"), venue, liveliness is not None, composer, accompaniment)}.mp3'
     return mp3(out, room.SR, file, {'title': f'{work} {title}'.strip(), 'composer': composer, 'artist': 'choir-in-a-box',
                                      'comment': ', '.join(v for vs in render.get('voices', {}).values() for v in vs)})

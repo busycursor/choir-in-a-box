@@ -17,6 +17,7 @@ Put in a webpage or a score and get back a choir singing it, either in four part
 - **Sings it with real voices.** The singers are the 20 professional singers of [VocalSet](https://zenodo.org/records/1442513) (sopranos, mezzos, a countertenor, tenors, baritones, basses), sung through [SoulX-Singer](https://github.com/Soul-AILab/SoulX-Singer). Parts are mapped to range or moved through octaves to build the correct mix.
 - **Performance variation.** Slowing into fermatas, longer ending. Phrases swell and ease into cadence, and singers take breaths at different moments.
 - **Venue variation.** Singers are placed spatially in a choir formation: sopranos to basses left to right, men a row behind, a section spread across its place.
+- **Optionally, with an accompaniment.** An organ, a harpsichord or a piano plays with the choir, read from the score: a continuo part where there is one (figured bass realized by the period rules), or the chorale's own harmony. The organ is synthesized, with stops, couplers, a swell box and registrations that change with the music's form; the harpsichord and piano are sampled, played with arpeggiation, ornaments and phrasing. Each stands in the room with the choir: the organ in the gallery, the others by the basses.
 - **Optionally, in front of an audience.** The stage settling, a conductor's baton, people shifting and the odd cough between phrases, applause at the end, set by how lively they are. Some people may accidentally clap between movements. The conductor (cloud-only) can introduce the piece first.
 
 ## Install
@@ -29,7 +30,7 @@ cd choir-in-a-box
 scripts/install.sh
 ```
 
-It installs espeak-ng and ffmpeg, SoulX-Singer (its code, a Python environment and its 2.6 GB model, plus the Whisper model it uses) and the VocalSet singers (about 220 MB of their recordings), all into `engine/`, then runs the tests. About 4 GB in all.
+It installs espeak-ng and ffmpeg, SoulX-Singer (its code, a Python environment and its 2.6 GB model, plus the Whisper model it uses) the VocalSet singers (about 220 MB of their recordings) and the sampled harpsichord and piano (about 850 MB), all into `engine/`, then runs the tests. About 5 GB in all.
 
 ## Use
 
@@ -41,6 +42,7 @@ $P -m chorale https://example.org/page-with-scores#piece-name --audience
 $P -m chorale score.musicxml --choir=quartet --venue=small_church --audience=0.9
 $P -m chorale score.musicxml --audience --conductor          # he introduces it first
 $P -m chorale https://example.org/page-with-scores --all     # every score on the page
+$P -m chorale score.musicxml --accompaniment=organ           # with an organ (or harpsichord, piano)
 ```
 
 Output goes to `engine/renders/<name>/`. No optimization at this time, on M4 Pro render speed is about 0.3x realtime, per singer, so rendering as many as 18 can take awhile. For remixing existing parts, `--mix-only` re-mixes a finished render without regeneration.
@@ -56,21 +58,25 @@ Output goes to `engine/renders/<name>/`. No optimization at this time, on M4 Pro
 | `--bpm=N`, `--lang=de\|en` | tempo (else the score's, or default 72) and language (else told from the lyrics) |
 | `--stop=<bar>.<beat>` | everyone ends together there, held: for a canon that would go round forever |
 | `--seed=N` | a different audience on the same performance |
+| `--accompaniment=organ\|harpsichord\|piano` | an instrument plays with the choir, from the score |
+| `--accompaniment-style=continuo\|doubling` | realize the continuo (organ and harpsichord's default) or play the voices' parts (piano's default) |
+| `--registration=continuo\|continuo_bright\|chorale\|soft\|plenum\|reed` | organ: one registration throughout, instead of changing with the form |
 | `--dry-run` | part mapping only |
 
 ## How it works
 
-Score → parts (`score_parts.py`: repeats, lyrics laid on every part, pronunciation, the tempo map) → singing (`sing_parts.py`, `soulx_render.py`: each phrase sung by SoulX-Singer in each singer's voice, checked for wrong notes and sung again if one slips) → the room (`room.py`) → the audience (`audience.py`) → MP3 (`finish.py`). [docs/how-it-works.md](docs/how-it-works.md) has the detail [AI-generated documentation], and the reasons behind the less obvious parts.
+Score → parts (`score_parts.py`: repeats, lyrics laid on every part, pronunciation, the tempo map) → singing (`sing_parts.py`, `soulx_render.py`: each phrase sung by SoulX-Singer in each singer's voice, checked for wrong notes and sung again if one slips) → an accompaniment if asked (`accompany.py`, `realize.py`, `organ.py`, `sampler.py`) → the room (`room.py`) → the audience (`audience.py`) → MP3 (`finish.py`). [docs/how-it-works.md](docs/how-it-works.md) has the detail [AI-generated documentation], and the reasons behind the less obvious parts.
 
 ## Credits
 
 - Singing: [SoulX-Singer](https://github.com/Soul-AILab/SoulX-Singer) (Apache 2.0)
 - Voices: [VocalSet](https://zenodo.org/records/1442513), Wilkins, Seetharaman, Wahl and Pardo, ISMIR 2018, and its note annotations, [Annotated-VocalSet](https://zenodo.org/records/7061507), Faghih and Timoney, *Applied Sciences* 2022. (All CC BY 4.0)
+- Harpsichord and piano: the [Versilian Community Sample Library](https://github.com/sgossner/VCSL) (CC0), downloaded by the installer.
 - SFX and conductor are ElevenLabs.
 
 ## Find this
 
-An open-source AI choir: singing voice synthesis that turns sheet music (MusicXML) into a realistic choir recording, from a four-part quartet to a full SATB choir, with a church acoustic and an optional live audience. For Bach chorales, hymns, canons and part-songs; for hearing a choral score before rehearsal, or a demo recording of one. A summary for language models and AI assistants is in [llms.txt](https://busycursor.github.io/choir-in-a-box/llms.txt).
+An open-source AI choir: singing voice synthesis that turns sheet music (MusicXML) into a realistic choir recording, from a four-part quartet to a full SATB choir, with a church acoustic and an optional live audience. With organ, harpsichord or piano accompaniment realized from the score. For Bach chorales, hymns, canons and part-songs; for hearing a choral score before rehearsal, or a demo recording of one. A summary for language models and AI assistants is in [llms.txt](https://busycursor.github.io/choir-in-a-box/llms.txt).
 
 ## License
 

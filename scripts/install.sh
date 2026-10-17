@@ -41,6 +41,9 @@ $P -m chorale.fetch_vocalset
 $P -W ignore -m chorale.import_vocalset > /dev/null
 echo "   $(ls voices | wc -l | tr -d ' ') voices"
 
+echo "== instruments: a Flemish harpsichord and a Steinway grand from VCSL (the organ is synthesized)"
+$P -W ignore -m chorale.fetch_instruments
+
 echo "== tests"
 $P -W ignore -m pytest -q tests
 

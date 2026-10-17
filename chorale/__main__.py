@@ -11,6 +11,9 @@ Usage:
 Mixing: [--venue=small_church|church|large_church|larger_church] [--audience[=0.35]]
         [--applause=applause|applause_hesitant|applause_finale] [--conductor[="his line"]] [--seed=N]
 --mix-only remixes an existing render (no singing) with new mixing options.
+Accompaniment: [--accompaniment=organ|harpsichord|piano] [--accompaniment-style=continuo|doubling]
+        [--registration=continuo|continuo_bright|chorale|soft|plenum|reed]  (organ: one registration throughout,
+        instead of changing by section)
   python -m chorale <page> --all [...]   (every score on a page)
 Writes <out>/<part>.wav, mix.wav, parts.json and render.json (what it was sung with).
 """
@@ -53,7 +56,7 @@ def sing(ref: str, opt: dict, dry: bool, flags: frozenset = frozenset()) -> Path
     if dry:
         return out
     if 'mix-only' not in flags:
-        sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt)
+        sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt, flags)
     from chorale.finish import finish
     from chorale import audience, conductor
     live = None if 'audience' not in opt and 'audience' not in flags else float(opt.get('audience', audience.LIVELY))
@@ -61,10 +64,11 @@ def sing(ref: str, opt: dict, dry: bool, flags: frozenset = frozenset()) -> Path
     if line is not None and live is None:
         live = audience.LIVELY   # he speaks to an audience
     return finish(out, opt.get('venue', 'large_church' if opt.get('choir', 'full') != 'quartet' else 'church'),
-                  live, opt.get('applause', 'applause'), line, int(opt.get('seed', 0)))
+                  live, opt.get('applause', 'applause'), line, int(opt.get('seed', 0)),
+                  opt.get('accompaniment'), opt.get('accompaniment-style'), opt.get('registration'))
 
 
-def sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt):
+def sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt, flags=frozenset()):
     steps = int(opt.get('steps', 64))
     cfg = float(opt['cfg']) if 'cfg' in opt else None
     pipeline.sing(out / 'parts.json', out, cast, steps=steps, cfg=cfg)
@@ -72,7 +76,9 @@ def sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt):
         'id': id, 'score': str(score), 'bpm': bpm, 'lang': parts['lang'], 'steps': steps, 'cfg': cfg,
         'choir': opt.get('choir', 'full'), 'voices': {p: [v.name for v in singers[p] if v.dir in dict(c)] for p, c in cast.items()},
         'sitting_out': sitting_out,
-        'shifts': {p: [s for _, s in c] for p, c in cast.items()}, 'git': git_hash()}, indent=1) + '\n')
+        'shifts': {p: [s for _, s in c] for p, c in cast.items()}, 'git': git_hash(),
+        'options': {k: opt[k] for k in ('stop', 'transpose') if k in opt} | ({'literal': True} if 'literal' in flags else {})},
+        indent=1) + '\n')
 
 
 def main(argv: list[str]) -> None:

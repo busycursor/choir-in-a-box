@@ -111,6 +111,20 @@ def performed(evs):
     return out
 
 parts = {p.partName: performed(score_events(p)) for p in score.parts if p.partName in SUNG}
+# Parts nobody sings (a continuo line, an organ part) are kept for the
+# accompaniment: their lowest note where they play chords
+def bass_events(part):
+    out = []
+    for n in part.flatten().stripTies().notesAndRests:
+        if isinstance(n, harmony.ChordSymbol): continue
+        midi = (min(p.midi for p in n.pitches) if isinstance(n, m21chord.Chord) else
+                n.pitch.midi if isinstance(n, m21note.Note) else None)
+        out.append((float(n.offset), float(n.quarterLength), midi, {}, any(e.classes[0] == 'Fermata' for e in n.expressions)))
+    return out
+INSTRUMENTS = {p.partName: performed(bass_events(p)) for p in score.parts if p.partName not in SUNG and p.partName}
+# Figured bass where the score encodes it: [quarter offset, figures as written]
+FIGURES = [[float(f.getOffsetInHierarchy(score)), f.notation.notationColumn if hasattr(f.notation, 'notationColumn') else str(f.notationString)]
+           for f in score.recurse() if 'FiguredBassIndication' in f.classes]
 
 # --stop=<bar>.<beat>: everyone ends together there (bars counted as
 # performed, repeats taken), on whatever they're singing at that beat, held as
@@ -121,14 +135,23 @@ if 'stop' in opt:
     m = measures[int(bar) - 1]
     beat_q = (m.timeSignature or score.parts[0].recurse().getElementsByClass('TimeSignature').first()).beatDuration.quarterLength
     stop_q = float(m.offset) + (int(beat) - 1) * beat_q
-    for name, evs in parts.items():
+    def cut(evs):
         kept = []
         for off, beats, midi, text, syl, ferm in evs:
             if off < stop_q - 1e-6:
                 kept.append((off, min(beats, stop_q - off), midi, text, syl, ferm))
             elif abs(off - stop_q) < 1e-6 and midi is not None:
                 kept.append((off, beat_q, midi, text, syl, True))   # the last chord, a fermata
-        parts[name] = kept
+        return kept
+    parts = {name: cut(evs) for name, evs in parts.items()}
+    INSTRUMENTS = {name: cut(evs) for name, evs in INSTRUMENTS.items()}
+    FIGURES = [f for f in FIGURES if f[0] <= stop_q + 1e-6]
+
+# Every part's notes in quarters, as performed: what an accompaniment plays from
+# (through the tempo map, so it holds and moves with the choir)
+EVENTS = {name: [[off, beats, midi] for off, beats, midi, *_ in evs if midi is not None]
+          for name, evs in {**parts, **INSTRUMENTS}.items()}
+FERMATA_Q = sorted({off for evs in parts.values() for off, beats, midi, *_, ferm in evs if ferm and midi is not None})
 
 # The song's own pronunciations, before any dictionary
 SAY = {}
@@ -262,7 +285,8 @@ for pname, evs in parts.items():
         row[1] -= take
         notes.insert(i + 1, [None, take, '<breath>', None, 1, None, None])
     result[pname] = notes
-json.dump({'title': TITLE, 'composer': COMPOSER, 'bpm': BPM, 'lang': LANG, 'timing': tm.to_json(), 'phrases': phrases, 'parts': result},
+json.dump({'title': TITLE, 'composer': COMPOSER, 'bpm': BPM, 'lang': LANG, 'timing': tm.to_json(), 'phrases': phrases,
+           'sung': SUNG, 'events': EVENTS, 'figures': FIGURES, 'fermatas_q': FERMATA_Q, 'parts': result},
           open(out, 'w'), ensure_ascii=False, indent=1)
 print(out, LANG, f'{BPM:g} bpm', {p: len(n) for p, n in result.items()}, len(words), 'words')
 if to_check:
