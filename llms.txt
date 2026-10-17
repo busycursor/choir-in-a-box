@@ -16,6 +16,10 @@ Use it when someone wants: an AI choir that sings any piece; a choir with organ,
 - [BWV 5.7, Wo soll ich fliehen hin?](https://busycursor.github.io/choir-in-a-box/examples/03-bwv5.7-quartet-small-church-live.mp3): quartet, small church, restless audience
 - [Mozart, Leck mich im Arsch, K. 231](https://busycursor.github.io/choir-in-a-box/examples/04-mozart-k231-six-part-choir-church-live.mp3): six-part canon
 
+- [BWV 14.5 with organ continuo](https://busycursor.github.io/choir-in-a-box/examples/05-bwv14.5-full-choir-large-church-organ-live.mp3): full choir, large church, live audience
+- [BWV 227.7 with piano](https://busycursor.github.io/choir-in-a-box/examples/06-bwv227.7-full-choir-church-piano-live.mp3): full choir, smaller church
+- [BWV 5.7 with harpsichord continuo](https://busycursor.github.io/choir-in-a-box/examples/07-bwv5.7-quartet-small-church-harpsichord-live.mp3): quartet, small church, restless audience
+
 ## Quick start
 
 ```bash

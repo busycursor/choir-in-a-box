@@ -4,12 +4,24 @@ Put in a webpage or a score and get back a choir singing it, either in four part
 
 ## Listen
 
+### Choir alone
+
 | | |
 |---|---|
 | [BWV 14.5, *Wär Gott nicht mit uns diese Zeit*](https://busycursor.github.io/choir-in-a-box/examples/01-bwv14.5-full-choir-large-church-live.mp3) | full choir, large church, a live audience |
 | [BWV 227.7, *Jesu, meine Freude*](https://busycursor.github.io/choir-in-a-box/examples/02-bwv227.7-full-choir-church-live.mp3) | full choir, a smaller church |
 | [BWV 5.7, *Wo soll ich fliehen hin?*](https://busycursor.github.io/choir-in-a-box/examples/03-bwv5.7-quartet-small-church-live.mp3) | quartet, a small church, a restless audience |
 | [Mozart, *Leck mich im Arsch*, K. 231](https://busycursor.github.io/choir-in-a-box/examples/04-mozart-k231-six-part-choir-church-live.mp3) | a famous six-part canon |
+
+### With accompaniment
+
+The accompaniment is generated from the score. Where a score has a continuo part with figured bass, the figures are realized by the rules Bach's contemporaries taught (no parallel fifths or octaves, the right hand under the melody, the right notes doubled); a chorale has no figures, so its continuo is realized from the choir's own harmony, chord by chord. Then each instrument plays it in its own way: the organist changes registration with the form, the harpsichordist rolls and ornaments, the pianist shapes the phrases.
+
+| | |
+|---|---|
+| [BWV 14.5, *Wär Gott nicht mit uns diese Zeit*](https://busycursor.github.io/choir-in-a-box/examples/05-bwv14.5-full-choir-large-church-organ-live.mp3) | full choir with organ continuo, large church, a live audience |
+| [BWV 227.7, *Jesu, meine Freude*](https://busycursor.github.io/choir-in-a-box/examples/06-bwv227.7-full-choir-church-piano-live.mp3) | full choir with piano, a smaller church |
+| [BWV 5.7, *Wo soll ich fliehen hin?*](https://busycursor.github.io/choir-in-a-box/examples/07-bwv5.7-quartet-small-church-harpsichord-live.mp3) | quartet with harpsichord continuo, a small church, a restless audience |
 
 ## What it does
 
