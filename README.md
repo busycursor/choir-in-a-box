@@ -73,7 +73,7 @@ Output goes to `engine/renders/<name>/`. No optimization at this time, on M4 Pro
 | `--accompaniment=organ\|harpsichord\|piano` | an instrument plays with the choir, from the score |
 | `--accompaniment-style=continuo\|doubling` | realize the continuo (organ and harpsichord's default) or play the voices' parts (piano's default) |
 | `--registration=continuo\|continuo_bright\|chorale\|soft\|plenum\|reed` | organ: one registration throughout, instead of changing with the form |
-| `--skill=0.6` | the accompanist: 0.6 a competent player; toward 1 more ornaments and flourishes, well played; below about 0.45 wrong notes and fumbles; near 0 someone who can't really play it: late, falling behind, notes dropped and mostly wrong, and a stop to find the place |
+| `--skill=1.0` | the accompanist: 1 (the default) a fine player, with ornaments and flourishes; 0.6 a competent one; below about 0.45 wrong notes and fumbles; near 0 someone who can't really play it: late, falling behind, notes dropped and mostly wrong, and a stop to find the place |
 | `--dry-run` | part mapping only |
 
 ## How it works

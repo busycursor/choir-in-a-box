@@ -13,7 +13,7 @@ Mixing: [--venue=small_church|church|large_church|larger_church] [--audience[=0.
 --mix-only remixes an existing render (no singing) with new mixing options.
 Accompaniment: [--accompaniment=organ|harpsichord|piano] [--accompaniment-style=continuo|doubling]
         [--registration=continuo|continuo_bright|chorale|soft|plenum|reed]  (organ: one registration throughout,
-        instead of changing by section) [--skill=0.6]  (the accompanist: 0.6 competent, higher ornaments more,
+        instead of changing by section) [--skill=1.0]  (the accompanist: 1 the default, 0.6 competent, higher ornaments more,
         lower makes mistakes, very low breaks down and finds its way back)
   python -m chorale <page> --all [...]   (every score on a page)
 Writes <out>/<part>.wav, mix.wav, parts.json and render.json (what it was sung with).
@@ -67,7 +67,7 @@ def sing(ref: str, opt: dict, dry: bool, flags: frozenset = frozenset()) -> Path
     return finish(out, opt.get('venue', 'large_church' if opt.get('choir', 'full') != 'quartet' else 'church'),
                   live, opt.get('applause', 'applause'), line, int(opt.get('seed', 0)),
                   opt.get('accompaniment'), opt.get('accompaniment-style'), opt.get('registration'),
-                  float(opt.get('skill', 0.6)))
+                  float(opt.get('skill', 1.0)))
 
 
 def sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt, flags=frozenset()):

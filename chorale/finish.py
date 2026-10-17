@@ -61,7 +61,7 @@ def accompaniment_parts(render_dir: Path, render: dict, parts: dict) -> dict:
 
 def finish(render_dir: Path, venue: str = 'large_church', liveliness: float | None = None, applause: str = 'applause',
            conductor_line: str | None = None, seed: int = 0, accompaniment: str | None = None,
-           accompaniment_style: str | None = None, registration: str | None = None, skill: float = 0.6) -> Path:
+           accompaniment_style: str | None = None, registration: str | None = None, skill: float = 1.0) -> Path:
     """Mix a render in its venue (with an accompaniment, and live at
     `liveliness`, if asked) and write the MP3; returns its path."""
     render = json.loads((render_dir / 'render.json').read_text())

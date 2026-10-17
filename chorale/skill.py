@@ -1,5 +1,6 @@
-"""How well the accompanist plays (skill, 0..1; 0.6 a competent player, the
-default). Applied to the notes an instrument's style pass has made:
+"""How well the accompanist plays (skill, 0..1: 1, the default, a fine
+player; 0.6 a competent one). Applied to the notes an instrument's style
+pass has made:
 
 - Timing: at 0.6 and above, the human looseness the style passes already
   have, never tighter (a player is never a sequencer); below it, looser, with
@@ -22,7 +23,7 @@ All seeded: a bad performance is as reproducible as a good one.
 """
 import numpy as np
 
-DEFAULT = 0.6
+DEFAULT = 1.0
 COMPETENT = 0.6         # at and above this, the style passes' human timing as it is
 MISTAKES_BELOW = 0.45
 BREAKDOWN_BELOW = 0.15

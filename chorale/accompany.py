@@ -52,7 +52,7 @@ def _jitter(rng, n: Note, secs: float) -> Note:
 
 
 def continuo(parts: dict, instrument: str, seed: int = 0, score_key: str | None = None, voices: int = 3,
-             skill: float = 0.6) -> list[Note]:
+             skill: float = 1.0) -> list[Note]:
     """A realized continuo: the bass as written, the right hand's chords from
     realize.py, played the way the instrument is played."""
     from chorale import realize
@@ -113,7 +113,7 @@ def _step(m: int, scale: list[int], up: bool) -> int:
     return k
 
 
-def harpsichord_figuration(chords, voicings, at, rng, scale, skill: float = 0.6) -> list[Note]:
+def harpsichord_figuration(chords, voicings, at, rng, scale, skill: float = 1.0) -> list[Note]:
     from chorale.skill import chance, COMPETENT, MISTAKES_BELOW
     out = []
 
@@ -188,7 +188,7 @@ MELODY_LEAD = 0.008    # seconds the tune is ahead of the chord
 TOUCH = 0.04           # random variation of each note's velocity
 
 
-def doubling(parts: dict, seed: int = 0, skill: float = 0.6) -> list[Note]:
+def doubling(parts: dict, seed: int = 0, skill: float = 1.0) -> list[Note]:
     """The four parts as written, the way a pianist accompanies a hymn: phrases
     shaped, the tune a little forward, cadences rolled, the pedal holding each
     harmony until the next."""
@@ -285,7 +285,7 @@ def humanized(notes: list[Note], seed: int) -> list[Note]:
     return out
 
 
-def organ_notes(parts: dict, seed: int = 0, score_key: str | None = None, skill: float = 0.6) -> list[Note]:
+def organ_notes(parts: dict, seed: int = 0, score_key: str | None = None, skill: float = 1.0) -> list[Note]:
     """The organ continuo through its registration plan: each note's voice says
     which registration it sounds with ('manual:chorale')."""
     regs, voices = organ_plan(parts, seed)
@@ -320,7 +320,7 @@ def realize_scale(parts: dict, score_key: str | None) -> list[int]:
 
 
 def notes_for(parts: dict, instrument: str, style: str | None = None, seed: int = 0, score_key: str | None = None,
-              skill: float = 0.6) -> list[Note]:
+              skill: float = 1.0) -> list[Note]:
     style = style or STYLE[instrument]
     if instrument == 'organ' and style == 'continuo':
         return organ_notes(parts, seed, score_key, skill)
@@ -340,7 +340,7 @@ PLACE = {'organ': ((0.0, 0.9), -6.0, 5.0), 'harpsichord': ((0.3, 0.35), -7.0, 0.
 
 
 def render(parts: dict, instrument: str, style: str | None = None, registration: str | None = None,
-           seed: int = 0, score_key: str | None = None, skill: float = 0.6):
+           seed: int = 0, score_key: str | None = None, skill: float = 1.0):
     """The accompaniment's sound and where it goes: (stereo, room.Seat, dB under the choir, dB more into the room).
     skill (skill.py): 0.6 a competent player; higher ornaments more, lower makes mistakes, and very low breaks down."""
     from chorale import organ, room, sampler, skill as playing
