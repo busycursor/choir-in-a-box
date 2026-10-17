@@ -51,7 +51,8 @@ def _jitter(rng, n: Note, secs: float) -> Note:
     return Note(max(0.0, n.start + d), n.end, n.midi, n.velocity, n.voice)
 
 
-def continuo(parts: dict, instrument: str, seed: int = 0, score_key: str | None = None, voices: int = 3) -> list[Note]:
+def continuo(parts: dict, instrument: str, seed: int = 0, score_key: str | None = None, voices: int = 3,
+             skill: float = 0.6) -> list[Note]:
     """A realized continuo: the bass as written, the right hand's chords from
     realize.py, played the way the instrument is played."""
     from chorale import realize
@@ -83,7 +84,7 @@ def continuo(parts: dict, instrument: str, seed: int = 0, score_key: str | None 
             for m in [m for m in held if m not in voicing]:
                 out.append(held.pop(m))
     if instrument == 'harpsichord':
-        out += harpsichord_figuration(chords, voicings, at, rng, scale)
+        out += harpsichord_figuration(chords, voicings, at, rng, scale, skill)
     out += list(held.values())
     if instrument == 'organ':   # a small lift before each new phrase, the way an organist breathes with the choir
         ends = [at(0, q)[1] for q in parts.get('fermatas_q', [])]
@@ -99,6 +100,9 @@ BROKEN = 0.5          # of long chords, the share broken into a figure across th
 ACCIACCATURA = 0.15   # of short chords, the share struck with a crushed dissonance
 PASSING = 0.5         # of leaps of a third in the top voice, the share filled with a passing note
 TRILL_NOTE = 0.075    # seconds per note of a cadential trill
+MORDENT = 0.12        # of long top notes, the share given a mordent (a skilled player's)
+FLOURISH_ABOVE = 0.8  # skill above which a run sweeps into each cadence
+TRILL_FROM = 0.3      # skill below which a player doesn't attempt the cadential trill
 
 
 def _step(m: int, scale: list[int], up: bool) -> int:
@@ -109,7 +113,8 @@ def _step(m: int, scale: list[int], up: bool) -> int:
     return k
 
 
-def harpsichord_figuration(chords, voicings, at, rng, scale) -> list[Note]:
+def harpsichord_figuration(chords, voicings, at, rng, scale, skill: float = 0.6) -> list[Note]:
+    from chorale.skill import chance, COMPETENT, MISTAKES_BELOW
     out = []
 
     def strike(t0, t1, ns, vel, roll):
@@ -128,15 +133,29 @@ def harpsichord_figuration(chords, voicings, at, rng, scale) -> list[Note]:
             if ch.bass - 12 >= 28:
                 out.append(Note(a, b, ch.bass - 12, 0.7, 'lh'))
             continue
-        if nxt is not None and nxt.cadence:   # a trill on the top note into the cadence, from the note above
+        if nxt is not None and nxt.cadence and skill >= TRILL_FROM:   # a trill on the top note into the cadence, from the note above
             top, upper = notes[-1], _step(notes[-1], scale, True)
             strike(a, b, notes[:-1], 0.7, ROLL)
             t, k = a, 0
+            uneven = 0.4 * max(0.0, MISTAKES_BELOW - skill) / MISTAKES_BELOW   # an unsure player's trill stumbles
             while t < a + 0.75 * (b - a) - TRILL_NOTE:
-                out.append(Note(t, t + TRILL_NOTE, upper if k % 2 == 0 else top, 0.6, 'rh')); t += TRILL_NOTE; k += 1
+                d = TRILL_NOTE * (1 + rng.uniform(-uneven, uneven))
+                out.append(Note(t, t + d, upper if k % 2 == 0 else top, 0.6, 'rh')); t += d; k += 1
             out.append(Note(t, b, top, 0.65, 'rh'))
+            if skill > FLOURISH_ABOVE:   # a run sweeping up to the cadence's top note in the last half beat
+                target = max(voicings[i + 1])
+                run, m = [], target
+                for _ in range(5):
+                    m = _step(m, scale, False); run.append(m)
+                t0, _ = at(ch.end_q - 0.5, ch.end_q)
+                for k2, m in enumerate(reversed(run)):
+                    out.append(Note(t0 + k2 * (b - t0) / 6, t0 + (k2 + 1) * (b - t0) / 6, m, 0.55, 'rh'))
             continue
-        if q >= RESTRIKE_Q and rng.random() < BROKEN:   # broken up and back across the chord, in eighths
+        if skill > COMPETENT and q >= 1.5 and rng.random() < chance(MORDENT, skill):   # a mordent on the top note: note, the one below, note
+            low = _step(notes[-1], scale, False)
+            out += [Note(a, a + 0.05, notes[-1], 0.6, 'rh'), Note(a + 0.05, a + 0.1, low, 0.55, 'rh')]
+            a = a + 0.1
+        if q >= RESTRIKE_Q and rng.random() < chance(BROKEN, skill):   # broken up and back across the chord, in eighths
             figure = notes + notes[-2:0:-1]
             eighths = int(q * 2)
             for k in range(eighths):
@@ -148,11 +167,11 @@ def harpsichord_figuration(chords, voicings, at, rng, scale) -> list[Note]:
                 strike(t0, t1 if k + 1 < int(q) else b, notes if k == 0 else notes[1:], 0.75 if k == 0 else 0.6, ROLL)
         else:
             strike(a, b, notes, 0.75, ROLL)
-            if rng.random() < ACCIACCATURA:   # a dissonance a step below the middle note, crushed in and let go
+            if rng.random() < chance(ACCIACCATURA, skill):   # a dissonance a step below the middle note, crushed in and let go
                 crush = notes[len(notes) // 2] - 1
                 if crush % 12 not in ch.pcs:
                     out.append(Note(a + 0.004, a + 0.06, crush, 0.55, 'rh'))
-        if nxt is not None and q >= 1 and rng.random() < PASSING:   # fill a third in the top voice with a passing note
+        if nxt is not None and q >= 1 and rng.random() < chance(PASSING, skill):   # fill a third in the top voice with a passing note
             nxt_top = max(voicings[i + 1])
             if abs(nxt_top - notes[-1]) in (3, 4):
                 mid = _step(notes[-1], scale, nxt_top > notes[-1])
@@ -169,11 +188,14 @@ MELODY_LEAD = 0.008    # seconds the tune is ahead of the chord
 TOUCH = 0.04           # random variation of each note's velocity
 
 
-def doubling(parts: dict, seed: int = 0) -> list[Note]:
+def doubling(parts: dict, seed: int = 0, skill: float = 0.6) -> list[Note]:
     """The four parts as written, the way a pianist accompanies a hymn: phrases
     shaped, the tune a little forward, cadences rolled, the pedal holding each
     harmony until the next."""
+    from chorale import realize
+    from chorale.skill import chance, COMPETENT as COMPETENT_SKILL
     rng = np.random.default_rng(seed)
+    scale, _ = realize.key_info(parts)
     sung = [p for p in parts.get('sung', parts['events']) if p in parts['events']]
     bass_onsets = sorted({n.start for n in score_notes(parts, sung[-1])})
     phrases = [(LEAD_IN + a, LEAD_IN + b) for a, b in parts.get('phrases', [])] or [(0.0, 1e9)]
@@ -197,6 +219,9 @@ def doubling(parts: dict, seed: int = 0) -> list[Note]:
             if round(n.start, 3) in fermata_starts:   # a rolled cadence chord, bass first
                 start += (len(sung) - 1 - i) * 0.03
             out.append(Note(max(0.0, start), max(n.end, nxt), n.midi, vel, name.lower()))
+            if i == 0 and skill > COMPETENT_SKILL and any(abs(f - n.end) < 0.02 for f in fermata_starts) and rng.random() < chance(0.6, skill):
+                upper = n.midi + (2 if (n.midi + 2) % 12 in scale else 1)   # a grace note from above into the cadence's approach
+                out.append(Note(max(0.0, start - 0.06), start, upper, vel * 0.8, name.lower()))
             if i == len(sung) - 1 and abs(n.end - last_end) < 0.01 and n.midi - 12 >= 24:   # the last bass doubled an octave down
                 out.append(Note(n.start, n.end, n.midi - 12, vel, name.lower()))
     return out
@@ -260,7 +285,7 @@ def humanized(notes: list[Note], seed: int) -> list[Note]:
     return out
 
 
-def organ_notes(parts: dict, seed: int = 0, score_key: str | None = None) -> list[Note]:
+def organ_notes(parts: dict, seed: int = 0, score_key: str | None = None, skill: float = 0.6) -> list[Note]:
     """The organ continuo through its registration plan: each note's voice says
     which registration it sounds with ('manual:chorale')."""
     regs, voices = organ_plan(parts, seed)
@@ -274,18 +299,36 @@ def organ_notes(parts: dict, seed: int = 0, score_key: str | None = None) -> lis
             k = phrase_of(n.start)
             if voices[k] == want or (n.voice == 'pedal' and want == 3):
                 out.append(Note(n.start, n.end, n.midi, n.velocity, f'{n.voice}:{regs[k]}'))
+    if skill > 0.6:   # a skilled organist's mordent on the top note before each cadence
+        from chorale.skill import chance
+        rng = np.random.default_rng(np.random.SeedSequence([seed, 17]))
+        tops = {}
+        for n in out:
+            if n.voice.startswith("manual") and any(abs(n.end - e) < 0.15 for e in ends):
+                tops[n.start] = max(tops.get(n.start, n), n, key=lambda x: x.midi)
+        for n in tops.values():
+            if rng.random() < chance(0.5, skill):
+                below = n.midi - (1 if (n.midi - 1) % 12 in realize_scale(parts, score_key) else 2)
+                out += [Note(n.start, n.start + 0.06, n.midi, n.velocity, n.voice), Note(n.start + 0.06, n.start + 0.12, below, n.velocity, n.voice)]
+                out[out.index(n)] = Note(n.start + 0.12, n.end, n.midi, n.velocity, n.voice)
     return humanized(out, seed)
 
 
-def notes_for(parts: dict, instrument: str, style: str | None = None, seed: int = 0, score_key: str | None = None) -> list[Note]:
+def realize_scale(parts: dict, score_key: str | None) -> list[int]:
+    from chorale import realize
+    return realize.key_info(parts, score_key)[0]
+
+
+def notes_for(parts: dict, instrument: str, style: str | None = None, seed: int = 0, score_key: str | None = None,
+              skill: float = 0.6) -> list[Note]:
     style = style or STYLE[instrument]
     if instrument == 'organ' and style == 'continuo':
-        return organ_notes(parts, seed, score_key)
+        return organ_notes(parts, seed, score_key, skill)
     if instrument == 'organ':   # doubling on the organ: manual for the upper parts, pedal for the bass
         sung = [p for p in parts.get('sung', parts['events']) if p in parts['events']]
         return humanized([Note(n.start, n.end, n.midi, n.velocity, ('pedal' if n.voice == sung[-1].lower() else 'manual') + ':chorale')
-                          for n in doubling(parts, seed)], seed)
-    return continuo(parts, instrument, seed, score_key) if style == 'continuo' else doubling(parts, seed)
+                          for n in doubling(parts, seed, skill)], seed)
+    return continuo(parts, instrument, seed, score_key, skill=skill) if style == 'continuo' else doubling(parts, seed, skill)
 
 
 # Where each instrument stands and how loud it sits: (pan, distance), dB under
@@ -297,10 +340,13 @@ PLACE = {'organ': ((0.0, 0.9), -6.0, 5.0), 'harpsichord': ((0.3, 0.35), -7.0, 0.
 
 
 def render(parts: dict, instrument: str, style: str | None = None, registration: str | None = None,
-           seed: int = 0, score_key: str | None = None):
-    """The accompaniment's sound and where it goes: (stereo, room.Seat, dB under the choir, dB more into the room)."""
-    from chorale import organ, room, sampler
-    notes = notes_for(parts, instrument, style, seed, score_key)
+           seed: int = 0, score_key: str | None = None, skill: float = 0.6):
+    """The accompaniment's sound and where it goes: (stereo, room.Seat, dB under the choir, dB more into the room).
+    skill (skill.py): 0.6 a competent player; higher ornaments more, lower makes mistakes, and very low breaks down."""
+    from chorale import organ, room, sampler, skill as playing
+    notes = notes_for(parts, instrument, style, seed, score_key, skill)
+    phrases = [(LEAD_IN + a, LEAD_IN + b) for a, b in parts.get('phrases', [])]
+    notes = playing.perform(notes, skill, seed, realize_scale(parts, score_key), phrases)
     if instrument == 'organ':
         if registration:   # one registration throughout
             notes = [Note(n.start, n.end, n.midi, n.velocity, n.voice.split(':')[0] + ':' + registration) for n in notes]

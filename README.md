@@ -29,7 +29,7 @@ The accompaniment is generated from the score. Where a score has a continuo part
 - **Sings it with real voices.** The singers are the 20 professional singers of [VocalSet](https://zenodo.org/records/1442513) (sopranos, mezzos, a countertenor, tenors, baritones, basses), sung through [SoulX-Singer](https://github.com/Soul-AILab/SoulX-Singer). Parts are mapped to range or moved through octaves to build the correct mix.
 - **Performance variation.** Slowing into fermatas, longer ending. Phrases swell and ease into cadence, and singers take breaths at different moments.
 - **Venue variation.** Singers are placed spatially in a choir formation: sopranos to basses left to right, men a row behind, a section spread across its place.
-- **Optionally, with an accompaniment.** An organ, a harpsichord or a piano plays with the choir, read from the score: a continuo part where there is one (figured bass realized by the period rules), or the chorale's own harmony. The organ is synthesized, with stops, couplers, a swell box and registrations that change with the music's form; the harpsichord and piano are sampled, played with arpeggiation, ornaments and phrasing. Each stands in the room with the choir: the organ in the gallery, the others by the basses.
+- **Optionally, with an accompaniment.** An organ, a harpsichord or a piano plays with the choir, read from the score: a continuo part where there is one (figured bass realized by the period rules), or the chorale's own harmony. The organ is synthesized, with stops, couplers, a swell box and registrations that change with the music's form; the harpsichord and piano are sampled, played with arpeggiation, ornaments and phrasing. A skill setting makes the player anything from a virtuoso to someone who loses their place. Each stands in the room with the choir: the organ in the gallery, the others by the basses.
 - **Optionally, in front of an audience.** The stage settling, a conductor's baton, people shifting and the odd cough between phrases, applause at the end, set by how lively they are. Some people may accidentally clap between movements. The conductor (cloud-only) can introduce the piece first.
 
 ## Install
@@ -73,6 +73,7 @@ Output goes to `engine/renders/<name>/`. No optimization at this time, on M4 Pro
 | `--accompaniment=organ\|harpsichord\|piano` | an instrument plays with the choir, from the score |
 | `--accompaniment-style=continuo\|doubling` | realize the continuo (organ and harpsichord's default) or play the voices' parts (piano's default) |
 | `--registration=continuo\|continuo_bright\|chorale\|soft\|plenum\|reed` | organ: one registration throughout, instead of changing with the form |
+| `--skill=0.6` | the accompanist: 0.6 a competent player; toward 1 more ornaments and flourishes, well played; below about 0.45 wrong notes and fumbles; near 0 a breakdown, a stop and a search for the place |
 | `--dry-run` | part mapping only |
 
 ## How it works
