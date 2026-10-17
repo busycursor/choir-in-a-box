@@ -205,3 +205,21 @@ def test_a_phone_is_cut_off_into_its_second_ring(tmp_path, monkeypatch):
     live = np.flatnonzero(np.abs(x) > 1e-4)
     assert ring < live[-1] < 2 * ring                 # past the first ring, not through the second
     assert len(x) - live[-1] > 0.25 * ringtones.SR    # then silence
+
+
+def test_the_applause_follows_how_it_went():
+    import numpy as np
+    from chorale import audience
+    rng = lambda: np.random.default_rng(0)
+    assert audience.reaction(0.9, False, 'applause_finale', rng()) == [('applause_finale', 0.0, None, 0.0)]
+    polite = audience.reaction(0.4, False, 'applause', rng())
+    assert polite[0][0] == 'applause' and polite[0][2] < audience.reaction(0.55, False, 'applause', rng())[0][2]   # shorter, the worse it was
+    kinds = lambda q, fell, seed: [k for k, *_ in audience.reaction(q, fell, 'applause', np.random.default_rng(seed))]
+    for seed in range(40):
+        assert kinds(0.25, False, seed) == ['applause_scattered']             # no bravo from 0.2 up
+        assert kinds(0.15, False, seed)[0] == 'applause_scattered'
+        assert kinds(0.05, False, seed)[0] in ('applause_bewildered', 'applause_one')
+        assert all(after >= 1.5 for _, after, *_ in audience.reaction(0.0, True, 'applause', np.random.default_rng(seed)))   # nobody's sure it's over
+    bravos = sum('bravo' in kinds(q, q < 0.02, s) for q in (0.0, 0.05, 0.15) for s in range(200)) / 600
+    assert 0.18 < bravos < 0.32                                              # now and then, below 0.2
+    assert kinds(0.9, True, 0)[0] != 'applause'                              # a good choir that fell apart still fell apart

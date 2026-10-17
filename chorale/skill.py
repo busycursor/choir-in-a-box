@@ -19,6 +19,9 @@ pass has made:
   an abrupt stop, a few tentative notes looking for the place, and back in at
   the next phrase. Below TWICE_BELOW it can happen twice.
 
+With a choir, where it breaks down and where it gives up on a choir that's
+fallen apart come from the plan it shares with the choir (ensemble.py).
+
 All seeded: a bad performance is as reproducible as a good one.
 """
 import numpy as np
@@ -125,22 +128,30 @@ def fumble(notes: list, skill: float, rng, scale: list[int]) -> list:
     return out
 
 
-def breakdowns(notes: list, skill: float, rng, phrases: list[tuple[float, float]]) -> list:
-    """A stretch on the wrong chords, a stop, searching, and back in at the next phrase."""
+def breakdown_spans(skill: float, rng, phrases: list[tuple[float, float]]) -> list[dict]:
+    """Where the accompanist breaks down: a stretch of a phrase on the wrong
+    chords, stopping there, and back in at the next phrase."""
     if skill >= BREAKDOWN_BELOW or len(phrases) < 3:
-        return notes
+        return []
     count = 2 if skill < TWICE_BELOW and len(phrases) >= 5 else 1
     picks = sorted(rng.choice(np.arange(1, len(phrases) - 1), size=min(count, len(phrases) - 2), replace=False))
+    out = []
     for k in picks:
         a, b = phrases[k]
-        resume = phrases[k + 1][0]
-        wrong_until = a + (b - a) * rng.uniform(0.4, 0.7)
-        stop = wrong_until
-        shift = int(rng.choice([-2, -1, 1, 2, 5]))
+        out.append({'kind': 'breakdown', 'a': a, 'b': b, 'stop': a + (b - a) * rng.uniform(0.4, 0.7),
+                    'resume': phrases[k + 1][0], 'shift': int(rng.choice([-2, -1, 1, 2, 5]))})
+    return out
+
+
+def breakdowns(notes: list, spans: list[dict], rng) -> list:
+    """Each breakdown: the right shape on the wrong chords, a stop, a few quiet
+    notes looking for the place, and back in at the next phrase."""
+    for sp in spans:
+        a, b, stop, resume = sp['a'], sp['b'], sp['stop'], sp['resume']
         kept, tried = [], []
         for n in notes:
-            if a <= n.start < wrong_until:          # the right shape on the wrong chords
-                kept.append(_note(n, midi=n.midi + shift))
+            if a <= n.start < stop:                 # the right shape on the wrong chords
+                kept.append(_note(n, midi=n.midi + sp['shift']))
             elif stop <= n.start < resume:          # stopped
                 continue
             else:
@@ -155,10 +166,41 @@ def breakdowns(notes: list, skill: float, rng, phrases: list[tuple[float, float]
     return notes
 
 
-def perform(notes: list, skill: float, seed: int, scale: list[int], phrases: list[tuple[float, float]]) -> list:
-    """The notes as a player of this skill plays them."""
+RALLY = 1.15   # how much harder the accompanist plays, carrying on alone to rally the choir
+
+
+def given_up(notes: list, ev: dict) -> list:
+    """The accompanist after the choir has fallen apart (ensemble.py): playing
+    on harder to rally them (from rally to stop), stopping, then only its
+    tries at leading them back in (each (from, to)), and back for good at
+    `back` if the choir is coming back."""
+    rally, stop, back, tries = ev['rally'], ev['stop'], ev.get('back'), ev.get('tries', [])
+    out = []
+    for n in notes:
+        if n.start < stop:
+            out.append(_note(n, end=min(n.end, stop + 0.15), velocity=min(1.0, n.velocity * RALLY) if n.start >= rally else n.velocity))
+        elif back is not None and n.start >= back:
+            out.append(n)
+        else:
+            for t0, t1 in tries:
+                if t0 <= n.start < t1:
+                    out.append(_note(n, end=min(n.end, t1 + 0.15)))
+    return out
+
+
+def perform(notes: list, skill: float, seed: int, scale: list[int], phrases: list[tuple[float, float]],
+            events: list[dict] | None = None) -> list:
+    """The notes as a player of this skill plays them. events (ensemble.py),
+    when it plays with a choir: its breakdowns, and where it gives up on a
+    choir that has fallen apart, instead of breaking down on its own."""
     rng = np.random.default_rng(np.random.SeedSequence([seed, 311]))
     notes = loosen(notes, skill, rng)
     notes = fumble(notes, skill, rng, scale) if skill < FUMBLE_BELOW else mistakes(notes, skill, rng, scale)
-    notes = breakdowns(notes, skill, rng, phrases)
+    if events is None:
+        notes = breakdowns(notes, breakdown_spans(skill, rng, phrases), rng)
+    else:
+        notes = breakdowns(notes, [e for e in events if e['kind'] == 'breakdown'], rng)
+        for e in events:
+            if e['kind'] == 'give_up':
+                notes = given_up(notes, e)
     return sorted(notes, key=lambda n: n.start)

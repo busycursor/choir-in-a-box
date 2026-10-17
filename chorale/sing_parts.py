@@ -16,7 +16,11 @@ for several parts, <out dir>/mix.wav. --steps sets SoulX's refinement steps
 the prompt and the score (its config says 3; higher holds the voice and the
 notes closer, at the risk of a harsher sound). --ghost=0 and --cons-lead=0
 turn off the running start and the consonants-before-the-beat, to try a hard
-line several ways.
+line several ways. --skill=N (choir skill, choir_skill.py; 1 the default),
+--seed=N and --plan=<plan.json> (ensemble.py: where the choir collapses):
+each singer's own faults, all sung. Below 0.6 every singer is sung twice: a
+first take (<name>-take.wav) for its natural pitch curve, then that curve
+with the faults drawn in, sung again in SoulX's melody mode.
 """
 import json, os, subprocess, sys
 import numpy as np, soundfile as sf
@@ -181,6 +185,9 @@ def section(wavs):
 if __name__ == '__main__':
     steps = next((int(a.split('=')[1]) for a in sys.argv[3:] if a.startswith('--steps=')), None)
     cfg = next((float(a.split('=')[1]) for a in sys.argv[3:] if a.startswith('--cfg=')), None)
+    skill = next((float(a.split('=')[1]) for a in sys.argv[3:] if a.startswith('--skill=')), 1.0)
+    seed = next((int(a.split('=')[1]) for a in sys.argv[3:] if a.startswith('--seed=')), 0)
+    plan = next((a.split('=', 1)[1] for a in sys.argv[3:] if a.startswith('--plan=')), None)
     # Switches for trying a hard line several ways: --ghost=0 (no running
     # start), --cons-lead=0 (consonants on the beat, as before)
     for a in sys.argv[3:]:
@@ -189,6 +196,12 @@ if __name__ == '__main__':
     parts_json, out_dir, specs = sys.argv[1], sys.argv[2], [a for a in sys.argv[3:] if not a.startswith('--')]
     data = json.load(open(parts_json))
     out_dir = os.path.abspath(out_dir)
+    import choir_skill  # (this folder: run as a script)
+    scale = choir_skill.scale_of(data['parts'])
+    falls = json.load(open(plan))['choir'] if plan else []
+    beat = 60 / data['bpm']
+    twice = skill < choir_skill.COMPETENT  # pitch faults: a first take, then sung again to a curve
+    log = [f'  choir: {line}' for line in choir_skill.describe(falls)]
     os.makedirs(out_dir, exist_ok=True)
     jobs, outs = [], []
     for spec in specs:  # Part=<prompt dir>[:shift], or a section: Part=<dir>[:shift],<dir>[:shift],...
@@ -199,19 +212,50 @@ if __name__ == '__main__':
             prompt = os.path.abspath(prompt)
             name = part.lower() if k == 0 and ',' not in rest else f'{part.lower()}-{k + 1}'
             t = os.path.join(out_dir, f'{name}-target.json')
-            json.dump(jittered(target(data['parts'][part], int(shift)), part, k), open(t, 'w'), ensure_ascii=False)
+            mine = choir_skill.singer_seed(seed, name)
+            said = []
+            sung = jittered(choir_skill.mangle(target(data['parts'][part], int(shift)), skill, mine, scale), part, k)
+            sung = choir_skill.timing(sung, skill, mine, part, falls, beat, said)
+            log += [f'  choir: {name}: {line}' for line in said]
+            json.dump(sung, open(t, 'w'), ensure_ascii=False)
             out = os.path.join(out_dir, f'{name}.wav')
-            jobs.append({'prompt_wav': os.path.join(prompt, 'prompt.wav'), 'prompt_meta': os.path.join(prompt, 'prompt.json'),
-                         'target_meta': t, 'out': out, **({'n_steps': steps} if steps else {}), **({'cfg': cfg} if cfg else {}),
-                         **({'section': part} if ',' in rest else {})})
+            if not sung:  # sang nothing at all
+                sf.write(out, np.zeros(24000), 24000)
+            else:
+                jobs.append({'prompt_wav': os.path.join(prompt, 'prompt.wav'), 'prompt_meta': os.path.join(prompt, 'prompt.json'),
+                             'target_meta': t, 'out': os.path.join(out_dir, f'{name}-take.wav') if twice else out, 'name': name,
+                             'final': out, **({'n_steps': steps} if steps else {}), **({'cfg': cfg} if cfg else {}),
+                             **({'section': part} if ',' in rest else {})})
             singers.append(out)
         outs.append((part, os.path.join(out_dir, f'{part.lower()}.wav'), singers))
-    jobs_path = os.path.join(out_dir, 'jobs.json')
-    json.dump(jobs, open(jobs_path, 'w'))
-    # One run for every part: our runner (soulx_render.py) mixes segments rather than pasting them
-    subprocess.run([os.path.join(ENGINE, '.venv/bin/python'), os.path.join(os.path.dirname(os.path.abspath(__file__)), 'soulx_render.py'), jobs_path],
-                   cwd=ENGINE, env={**os.environ, 'PYTHONPATH': ENGINE, 'PYTORCH_ENABLE_MPS_FALLBACK': '1'},
-                   check=True, stderr=subprocess.DEVNULL)  # stdout: each part as it lands, and any octave slip sung again
+    def run(jobs, name):
+        jobs_path = os.path.join(out_dir, name)
+        json.dump(jobs, open(jobs_path, 'w'))
+        # One run for every part: our runner (soulx_render.py) mixes segments rather than pasting them
+        subprocess.run([os.path.join(ENGINE, '.venv/bin/python'), os.path.join(os.path.dirname(os.path.abspath(__file__)), 'soulx_render.py'), jobs_path],
+                       cwd=ENGINE, env={**os.environ, 'PYTHONPATH': ENGINE, 'PYTORCH_ENABLE_MPS_FALLBACK': '1'},
+                       check=True, stderr=subprocess.DEVNULL)  # stdout: each part as it lands, and any octave slip sung again
+    if jobs:
+        run(jobs, 'jobs.json')
+    if twice and jobs:  # the second pass: each take's own pitch curve, with the faults drawn in
+        again = []
+        for job in jobs:
+            take, sr = sf.read(job['out'])
+            said = []
+            curves = choir_skill.with_faults(json.load(open(job['target_meta'])), take, sr, skill,
+                                             choir_skill.singer_seed(seed, job['name']), said)
+            log += [f'  choir: {job["name"]}: {line}' for line in said]
+            t = os.path.join(out_dir, f'{job["name"]}-sung.json')
+            json.dump(curves, open(t, 'w'), ensure_ascii=False)
+            if curves:
+                again.append({**job, 'target_meta': t, 'out': job['final']})
+            else:
+                sf.write(job['final'], np.zeros(sr), sr)
+        run(again, 'jobs-again.json')
+    for line in log:
+        print(line)
+    if log:
+        open(os.path.join(out_dir, 'choir.log'), 'w').write('\n'.join(log) + '\n')
     mixed = None
     for part, out, singers in outs:
         if len(singers) > 1:

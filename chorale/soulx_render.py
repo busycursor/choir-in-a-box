@@ -61,9 +61,9 @@ def main(jobs_path):
                 with torch.no_grad():
                     audio = model.infer({'prompt': prompt, 'target': processor.process(json.loads(json.dumps(seg)), None)},  # it rewrites what it's given
                                         auto_shift=False, pitch_shift=0, n_steps=job.get('n_steps', config.infer.n_steps),
-                                        cfg=job.get('cfg', config.infer.cfg), control='score', use_fp16=False)
+                                        cfg=job.get('cfg', config.infer.cfg), control='melody' if 'f0' in seg else 'score', use_fp16=False)
                 audio = audio.squeeze().cpu().numpy().astype(np.float32)
-                off = pitchcheck.slips(audio, sr, seg)
+                off = [] if 'f0' in seg else pitchcheck.slips(audio, sr, seg)   # sung to a pitch curve: it goes where it's told
                 if not off: break
                 last = attempt + 1 == job.get('tries', TRIES)
                 print(f'{job["out"]} phrase {i}: {", ".join(off)}' + ('; again' if not last else

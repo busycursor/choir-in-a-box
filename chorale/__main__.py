@@ -13,8 +13,13 @@ Mixing: [--venue=small_church|church|large_church|larger_church] [--audience[=0.
 --mix-only remixes an existing render (no singing) with new mixing options.
 Accompaniment: [--accompaniment=organ|harpsichord|piano] [--accompaniment-style=continuo|doubling]
         [--registration=continuo|continuo_bright|chorale|soft|plenum|reed]  (organ: one registration throughout,
-        instead of changing by section) [--skill=1.0]  (the accompanist: 1 the default, 0.6 competent, higher ornaments more,
-        lower makes mistakes, very low breaks down and finds its way back)
+        instead of changing by section)
+Skill: [--choir-skill=1.0] [--accompaniment-skill=1.0] [--skill=N sets both]  (1 the default, 0.6 competent.
+        The accompanist: higher ornaments more, lower makes mistakes, very low breaks down and finds its way back.
+        The choir: lower goes pitchy, then wrong and hunted-for notes, mispronunciation and missed cues, then losing
+        the place, then collapses until one part finds an entrance, and at 0 falls apart for good. All of it
+        is sung in (below 0.6 each singer is sung twice: a take, then its pitch curve with the faults);
+        an accompaniment chosen with --mix-only reacts to what the choir sang.)
   python -m chorale <page> --all [...]   (every score on a page)
 Writes <out>/<part>.wav, mix.wav, parts.json and render.json (what it was sung with).
 """
@@ -57,6 +62,7 @@ def sing(ref: str, opt: dict, dry: bool, flags: frozenset = frozenset()) -> Path
     if dry:
         return out
     if 'mix-only' not in flags:
+        opt = {**opt, 'choir-skill': opt.get('choir-skill', opt.get('skill', '1'))}
         sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt, flags)
     from chorale.finish import finish
     from chorale import audience, conductor
@@ -67,19 +73,30 @@ def sing(ref: str, opt: dict, dry: bool, flags: frozenset = frozenset()) -> Path
     return finish(out, opt.get('venue', 'large_church' if opt.get('choir', 'full') != 'quartet' else 'church'),
                   live, opt.get('applause', 'applause'), line, int(opt.get('seed', 0)),
                   opt.get('accompaniment'), opt.get('accompaniment-style'), opt.get('registration'),
-                  float(opt.get('skill', 1.0)))
+                  float(opt.get('accompaniment-skill', opt.get('skill', 1.0))))
 
 
 def sing_it(out, parts, cast, singers, sitting_out, id, score, bpm, opt, flags=frozenset()):
     steps = int(opt.get('steps', 64))
     cfg = float(opt['cfg']) if 'cfg' in opt else None
-    pipeline.sing(out / 'parts.json', out, cast, steps=steps, cfg=cfg)
+    choir_skill = float(opt.get('choir-skill', 1.0))
+    seed = int(opt.get('seed', 0))
+    # who falls apart where, and how the accompanist (if any) reacts: made now, as the choir sings its part of it
+    from chorale import ensemble
+    from chorale.sing_parts import LEAD_IN
+    playing = float(opt.get('accompaniment-skill', opt.get('skill', 1.0))) if opt.get('accompaniment') else None
+    together = ensemble.plan(choir_skill, playing, [(a + LEAD_IN, b + LEAD_IN) for a, b in parts.get('phrases') or []],
+                             list(cast), seed, 60 / parts['bpm'])
+    out.mkdir(parents=True, exist_ok=True)
+    (out / 'plan.json').write_text(json.dumps(together, indent=1) + '\n')
+    pipeline.sing(out / 'parts.json', out, cast, steps=steps, cfg=cfg, skill=choir_skill, seed=seed, plan=out / 'plan.json')
     (out / 'render.json').write_text(json.dumps({
-        'id': id, 'score': str(score), 'bpm': bpm, 'lang': parts['lang'], 'steps': steps, 'cfg': cfg,
+        'id': id, 'score': str(score.resolve().relative_to(voices.ROOT.resolve())) if score.resolve().is_relative_to(voices.ROOT.resolve()) else str(score), 'bpm': bpm, 'lang': parts['lang'], 'steps': steps, 'cfg': cfg,
         'choir': opt.get('choir', 'full'), 'voices': {p: [v.name for v in singers[p] if v.dir in dict(c)] for p, c in cast.items()},
         'sitting_out': sitting_out,
         'shifts': {p: [s for _, s in c] for p, c in cast.items()}, 'git': git_hash(),
-        'options': {k: opt[k] for k in ('stop', 'transpose') if k in opt} | ({'literal': True} if 'literal' in flags else {})},
+        'options': {k: opt[k] for k in ('stop', 'transpose') if k in opt} | ({'literal': True} if 'literal' in flags else {})
+                   | ({'choir-skill': choir_skill, 'seed': int(opt.get('seed', 0))} if choir_skill < 1 else {})},
         indent=1) + '\n')
 
 

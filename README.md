@@ -15,13 +15,23 @@ Put in a webpage or a score and get back a choir singing it, either in four part
 
 ### With accompaniment
 
-The accompaniment is generated from the score. Where a score has a continuo part with figured bass, the figures are realized by the rules Bach's contemporaries taught (no parallel fifths or octaves, the right hand under the melody, the right notes doubled); a chorale has no figures, so its continuo is realized from the choir's own harmony, chord by chord. Then each instrument plays it in its own way: the organist changes registration with the form, the harpsichordist rolls and ornaments, the pianist shapes the phrases.
+The accompaniment is generated from the score. Where a score has a continuo part with figured bass, the figures are realized by the rules Bach's contemporaries taught. If there are no figures, the continuo is realized from the choir's own harmony, chord by chord. Then each instrument plays it in its own way: the organist changes registration with the form, the harpsichordist rolls and ornaments, the pianist shapes the phrases.
 
 | | |
 |---|---|
 | [BWV 14.5, *Wär Gott nicht mit uns diese Zeit*](https://busycursor.github.io/choir-in-a-box/examples/05-bwv14.5-full-choir-large-church-organ-live.mp3) | full choir with organ continuo, large church, a live audience |
 | [BWV 227.7, *Jesu, meine Freude*](https://busycursor.github.io/choir-in-a-box/examples/06-bwv227.7-full-choir-church-piano-live.mp3) | full choir with piano, a smaller church |
 | [BWV 5.7, *Wo soll ich fliehen hin?*](https://busycursor.github.io/choir-in-a-box/examples/07-bwv5.7-quartet-small-church-harpsichord-live.mp3) | quartet with harpsichord continuo, a small church, a restless audience |
+
+### Variable skill level
+
+Choir and accompanist each have a skill setting, from 1 (the default, fine musicians) down to 0. As skill level decreases, pitchiness, wrong notes, missed cues, and losing the place start occurring. When one side falls apart, the other reacts, and the audience reacts accordingly (with class!)
+
+| | |
+|---|---|
+| [BWV 40.6, *Dazu ist erschienen der Sohn Gottes*](https://busycursor.github.io/choir-in-a-box/examples/08-bwv40.6-quartet-church-organ-choir-skill-0.35-live.mp3) | a parish choir (choir skill 0.35) with a fine organist: pitchy, a few wrong notes, but it gets through |
+| [BWV 5.7, *Wo soll ich fliehen hin?*](https://busycursor.github.io/choir-in-a-box/examples/09-bwv5.7-quartet-small-church-harpsichord-skill-0.1-live.mp3) | a fine quartet and a harpsichordist out of their depth (accompaniment skill 0.1), who breaks down; the choir sings on |
+| [BWV 13.6, *Meine Seufzer, meine Tränen*](https://busycursor.github.io/choir-in-a-box/examples/10-bwv13.6-quartet-church-organ-skill-0-live.mp3) | everyone at 0: it falls apart for good, one brave soprano tries to carry on |
 
 ## What it does
 
@@ -30,6 +40,7 @@ The accompaniment is generated from the score. Where a score has a continuo part
 - **Performance variation.** Slowing into fermatas, longer ending. Phrases swell and ease into cadence, and singers take breaths at different moments.
 - **Venue variation.** Singers are placed spatially in a choir formation: sopranos to basses left to right, men a row behind, a section spread across its place.
 - **Optionally, with an accompaniment.** An organ, a harpsichord or a piano plays with the choir, read from the score: a continuo part where there is one (figured bass realized by the period rules), or the chorale's own harmony. The organ is synthesized, with stops, couplers, a swell box and registrations that change with the music's form; the harpsichord and piano are sampled, played with arpeggiation, ornaments and phrasing. A skill setting makes the player anything from a virtuoso to someone who loses their place. Each stands in the room with the choir: the organ in the gallery, the others by the basses.
+- **Optionally, sung badly.** A choir skill setting goes from a fine choir down through pitchy, wrong and hunted-for notes, mispronunciation and missed cues, to losing the place and collapsing until one brave part finds an entrance; at 0 the piece falls apart for good. With an accompaniment, the two react to each other: a good accompanist plays on through a collapse, a poor one gives up with the choir or can even start the collapse.
 - **Optionally, in front of an audience.** The stage settling, a conductor's baton, people shifting and the odd cough between phrases, applause at the end, set by how lively they are. Some people may accidentally clap between movements. The conductor (cloud-only) can introduce the piece first.
 
 ## Install
@@ -73,7 +84,9 @@ Output goes to `engine/renders/<name>/`. No optimization at this time, on M4 Pro
 | `--accompaniment=organ\|harpsichord\|piano` | an instrument plays with the choir, from the score |
 | `--accompaniment-style=continuo\|doubling` | realize the continuo (organ and harpsichord's default) or play the voices' parts (piano's default) |
 | `--registration=continuo\|continuo_bright\|chorale\|soft\|plenum\|reed` | organ: one registration throughout, instead of changing with the form |
-| `--skill=1.0` | the accompanist: 1 (the default) a fine player, with ornaments and flourishes; 0.6 a competent one; below about 0.45 wrong notes and fumbles; near 0 someone who can't really play it: late, falling behind, notes dropped and mostly wrong, and a stop to find the place |
+| `--choir-skill=1.0` | the choir: 1 (the default) a fine choir; 0.6 a competent one; below that pitchy, below about 0.45 wrong and hunted-for notes, mispronunciation and missed cues, below 0.2 losing the place, below 0.15 collapsing until one part finds an entrance, at 0 falling apart for good. Below 0.6 each singer is sung twice (a take, then its pitch with the faults), and it's fixed once sung |
+| `--accompaniment-skill=1.0` | the accompanist: 1 (the default) a fine player, with ornaments and flourishes; 0.6 a competent one; below about 0.45 wrong notes and fumbles; near 0 someone who can't really play it: late, falling behind, notes dropped and mostly wrong, and a stop to find the place |
+| `--skill=N` | both skills at once |
 | `--dry-run` | part mapping only |
 
 ## How it works

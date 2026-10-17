@@ -21,10 +21,13 @@ def build_parts(score: Path, out: Path, bpm: float | None = None, lang: str | No
     return json.loads(out.read_text())
 
 
-def sing(parts_json: Path, out_dir: Path, cast: dict[str, list[tuple[str, int]]], steps: int | None = None, cfg: float | None = None) -> None:
+def sing(parts_json: Path, out_dir: Path, cast: dict[str, list[tuple[str, int]]], steps: int | None = None, cfg: float | None = None,
+         skill: float = 1.0, seed: int = 0, plan: Path | None = None) -> None:
     """cast: part -> [(prompt dir, semitone shift)], one per singer in the section."""
     cmd = [str(PYTHON), str(HERE / 'sing_parts.py'), str(parts_json), str(out_dir)]
     cmd += [f'{part}=' + ','.join(f'{prompt}:{shift}' for prompt, shift in singers) for part, singers in cast.items()]
     if steps: cmd.append(f'--steps={steps}')
     if cfg: cmd.append(f'--cfg={cfg:g}')
+    if skill < 1.0: cmd += [f'--skill={skill:g}', f'--seed={seed}']
+    if plan: cmd.append(f'--plan={plan}')
     subprocess.run(cmd, check=True)

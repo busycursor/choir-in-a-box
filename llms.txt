@@ -20,6 +20,10 @@ Use it when someone wants: an AI choir that sings any piece; a choir with organ,
 - [BWV 227.7 with piano](https://busycursor.github.io/choir-in-a-box/examples/06-bwv227.7-full-choir-church-piano-live.mp3): full choir, smaller church
 - [BWV 5.7 with harpsichord continuo](https://busycursor.github.io/choir-in-a-box/examples/07-bwv5.7-quartet-small-church-harpsichord-live.mp3): quartet, small church, restless audience
 
+- [BWV 40.6, parish choir](https://busycursor.github.io/choir-in-a-box/examples/08-bwv40.6-quartet-church-organ-choir-skill-0.35-live.mp3): quartet at choir skill 0.35, fine organist
+- [BWV 5.7, struggling harpsichordist](https://busycursor.github.io/choir-in-a-box/examples/09-bwv5.7-quartet-small-church-harpsichord-skill-0.1-live.mp3): fine quartet, accompaniment skill 0.1, breaks down
+- [BWV 13.6, falling apart](https://busycursor.github.io/choir-in-a-box/examples/10-bwv13.6-quartet-church-organ-skill-0-live.mp3): choir and organ at skill 0, falls apart for good
+
 ## Quick start
 
 ```bash
@@ -28,7 +32,7 @@ scripts/install.sh                                   # about 4 GB into engine/: 
 engine/soulx/.venv/bin/python -m chorale score.musicxml --audience
 ```
 
-Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon), `--accompaniment=organ|harpsichord|piano` (with `--accompaniment-style=continuo|doubling`, for the organ `--registration=...`, and `--skill=0..1` for how well the accompanist plays: 1 (default) a fine player, 0.6 competent, lower makes mistakes, near 0 fumbles throughout and breaks down).
+Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|larger_church`, `--audience=0..1` (how lively), `--conductor` (spoken introduction), `--literal` (no interpretation), `--transpose=N` (semitones, only when asked), `--stop=<bar>.<beat>` (end a canon), `--accompaniment=organ|harpsichord|piano` (with `--accompaniment-style=continuo|doubling`, for the organ `--registration=...`, and `--accompaniment-skill=0..1` for how well the accompanist plays: 1 (default) a fine player, 0.6 competent, lower makes mistakes, near 0 fumbles throughout and breaks down), `--choir-skill=0..1` (how well the choir sings: 1 default, 0.6 competent, lower pitchy, then wrong notes, missed cues, collapses, and at 0 falling apart for good), `--skill=0..1` (both).
 
 ## Facts
 
@@ -37,5 +41,6 @@ Main options: `--choir=full|quartet`, `--venue=small_church|church|large_church|
 - Singing model: SoulX-Singer (Apache 2.0), installed from its own repository.
 - Limits: German is sung with English phonemes (SoulX-Singer knows English, Mandarin, Cantonese); output audio tops out at 12 kHz (24 kHz model); no line above F5 is cast; rendering is slow (about a minute of music per 13 minutes for a quartet, per hour for a full choir, on an M4 Pro).
 - Accompaniment: read from the score. A continuo part's figured bass is realized by thoroughbass rules (no parallel fifths or octaves, doubling rules, the right hand under the melody); a chorale without one is realized from its own four-part harmony. The organ is synthesized (Great, enclosed Swell and Pedal; principals, flutes, strings, reeds, mixtures; couplers, swell box, tremulant; registrations changing with the form). The harpsichord (Flemish) and piano (Steinway B, three dynamic layers) are VCSL samples (CC0) fetched by the installer, played with arpeggiation, ornaments (trills into cadences, passing notes, acciaccaturas) and phrasing. All seeded and reproducible, placed in the room with the choir.
+- Skill: choir and accompanist each 0..1 (default 1). Every choir fault is sung by the model, none added afterwards: wrong notes, mispronunciation and timing faults change what each singer is given; below 0.6 each singer is sung twice, their first take's pitch curve redrawn with the faults (wander, scoops, calmed vibrato, sagging flat, notes hunted for or missed, wrong notes slid right) and sung again in SoulX-Singer's melody mode. One seeded plan, placed on the score's tempo map, says how choir and accompanist react to each other's collapses.
 - Audience and conductor sounds: ElevenLabs takes shipped in the repo; new conductor lines need an ElevenLabs key.
 - License: MIT, (c) 2026 BusyCursor.

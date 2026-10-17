@@ -340,13 +340,14 @@ PLACE = {'organ': ((0.0, 0.9), -6.0, 5.0), 'harpsichord': ((0.3, 0.35), -7.0, 0.
 
 
 def render(parts: dict, instrument: str, style: str | None = None, registration: str | None = None,
-           seed: int = 0, score_key: str | None = None, skill: float = 1.0):
+           seed: int = 0, score_key: str | None = None, skill: float = 1.0, events: list[dict] | None = None):
     """The accompaniment's sound and where it goes: (stereo, room.Seat, dB under the choir, dB more into the room).
-    skill (skill.py): 0.6 a competent player; higher ornaments more, lower makes mistakes, and very low breaks down."""
+    skill (skill.py): 0.6 a competent player; higher ornaments more, lower makes mistakes, and very low breaks down.
+    events (ensemble.py): how it plays with the choir when one of them falls apart."""
     from chorale import organ, room, sampler, skill as playing
     notes = notes_for(parts, instrument, style, seed, score_key, skill)
     phrases = [(LEAD_IN + a, LEAD_IN + b) for a, b in parts.get('phrases', [])]
-    notes = playing.perform(notes, skill, seed, realize_scale(parts, score_key), phrases)
+    notes = playing.perform(notes, skill, seed, realize_scale(parts, score_key), phrases, events)
     if instrument == 'organ':
         if registration:   # one registration throughout
             notes = [Note(n.start, n.end, n.midi, n.velocity, n.voice.split(':')[0] + ':' + registration) for n in notes]

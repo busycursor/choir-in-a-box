@@ -44,7 +44,6 @@ KINDS = {
     'walk_on':  (f'Footsteps of about twenty people walking slowly across a stone floor, {WHERE}', 6.0, 3),
     'risers':   (f'People stepping up onto hollow wooden risers, soft creaks and shuffling footsteps, then still, {WHERE}', 5.0, 3),
     'folders':  (f'Fabric rustling and stiff paper folders opening, a group of people standing in place, {WHERE}', 3.0, 3),
-    'seats':    (f'Wooden pews creaking softly as a few people shift their weight, {WHERE}', 2.5, 3),
     'settle':   (f'Audience ambience before a performance: soft shuffling and wooden pews creaking, then quiet, {WHERE}', 6.0, 3),
     'cough':    (f'One brief, discreet, stifled cough, far away and very soft, one-shot, {WHERE}', 2.0, 4),
     'rustle':   (f'One paper page turning and a soft fabric rustle, one-shot, {WHERE}', 2.0, 4),
@@ -62,7 +61,34 @@ KINDS = {
     'applause': ('Polite applause from about 150 people, starting gently, sustained, then thinning out to a few last '
                  'scattered claps that stop on their own, distant, in a large reverberant stone church, '
                  'no cheering, no whistles, no voices, no music', 15.0, 4),
+    # after a poor performance (reaction(): no boos)
+    'applause_scattered': ('Sparse, thin clapping from about eight people spread far apart across a large hall, each person '
+                           'clapping at their own slow tempo, out of time with each other, every clap separate and distinct, '
+                           'no energy, dying away one person at a time after a few seconds, distant, in a large reverberant '
+                           'stone church, no cheering, no voices, no music', 6.0, 4),
+    'applause_bewildered': ('Two or three people begin clapping hesitantly, unsure whether the piece has ended, a few uneven '
+                            'claps, then it trails off into an awkward silence, distant, in a large reverberant stone church, '
+                            'no voices, no music', 5.0, 3),
+    'applause_one': ('One single person clapping slowly and deliberately, alone, in a large silent audience, about eight claps, '
+                     'then stopping, distant, in a large reverberant stone church, no voices, no music', 5.0, 3),
 }
+
+# Spoken by one voice (the sound-effects model gives a crowd shouting in
+# Spanish for a lone "Bravo!"): ElevenLabs stock voices, no clones, the same
+# speech model as the conductor; placed far back in the hall like the rest
+SPOKEN = {'bravo': ('[shouting enthusiastically across a concert hall] Bravo!',
+                    {'george': 'JBFqnCBsd6RMkjVDRZzb', 'bill': 'pqHfZKP75CvOlQylNhV4', 'daniel': 'onwK4e9ZLuTAKqWW03F9'}, 2)}
+
+
+def _spoken(text: str, voice: str) -> bytes:
+    from chorale import conductor
+    req = urllib.request.Request(
+        'https://api.elevenlabs.io/v1/text-to-dialogue?output_format=mp3_44100_192',
+        data=json.dumps({'inputs': [{'text': text, 'voice_id': voice}], 'model_id': conductor.MODEL,
+                         'settings': {'stability': conductor.STABILITY}}).encode(),
+        headers={'xi-api-key': os.environ['ELEVENLABS_API_KEY'], 'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return r.read()
 
 
 def _sound(text: str, seconds: float) -> bytes:
@@ -101,9 +127,22 @@ def generate(more: str | None = None) -> Path:
                 break
             print(f.name, flush=True)
             f.write_bytes(_sound(text, seconds))
+    for kind, (text, voices, count) in SPOKEN.items():
+        if (more and kind != more) or (not more and list(TAKES.glob(f'{kind}_?.mp3'))):
+            continue
+        have = {f.stem[len(kind) + 1:] for f in TAKES.glob(f'{kind}_?.mp3')}
+        letters = iter(c for c in 'abcdefghijklmnop' if c not in have)
+        for name, voice in voices.items():
+            for _ in range(count):
+                f = TAKES / f'{kind}_{next(letters)}.mp3'
+                if 'ELEVENLABS_API_KEY' not in os.environ:
+                    print(f'{kind}: needs ELEVENLABS_API_KEY', flush=True)
+                    break
+                print(f.name, f'({name})', flush=True)
+                f.write_bytes(_spoken(text, voice))
     rows = []
     approved = set(picks())
-    for kind in KINDS:
+    for kind in [*KINDS, *SPOKEN]:
         if kind in approved:
             continue   # picked already: the page shows only what's still to choose
         files = sorted(TAKES.glob(f'{kind}_?.mp3'))
@@ -162,9 +201,10 @@ AT_BATON = 0.8       # the audience's noise once the baton is up
 REACT_S = 0.6        # seconds before anyone reacts to the first note
 # Loudness of each kind in the mix (LUFS), the music being at -20, at the
 # default liveliness; everything far under the music
-LEVEL = {'walk_on': -50, 'risers': -50, 'folders': -50, 'settle': -48, 'seats': -54,
+LEVEL = {'walk_on': -50, 'risers': -50, 'folders': -50, 'settle': -48,
          'cough': -47, 'rustle': -52, 'pew': -53, 'false_start': -40,
          'applause': -28, 'applause_hesitant': -28, 'applause_finale': -27,
+         'applause_scattered': -33, 'applause_bewildered': -36, 'applause_one': -38, 'bravo': -32,
          'baton': -60, 'score_page': -58, 'stand': -61,
          'fussing': -49, 'crying': -45, 'phone': -43}
 CONDUCTOR_LUFS = -27   # his line, room and all: up by the choir, not on a microphone
@@ -177,8 +217,8 @@ INTRO_IN, INTRO_HUSH, PAGE_AFTER, BATON_BEFORE = 1.2, 1.4, 0.5, 1.0
 DARKEN_HZ, ROOM_SEND_DB = 5000, -6
 BED_HZ = 2500        # the stage noise before the music darker still: background, not events
 BED_INTO = 10.0      # ...carrying on under the first seconds of the music as people settle
-DURING = ('cough', 'cough', 'rustle', 'pew', 'seats')   # what may sound in a break between phrases (coughs most)
-PRESENCE = ('rustle', 'pew', 'seats')          # the faint audience under the whole piece
+DURING = ('cough', 'cough', 'rustle', 'pew', 'pew')   # what may sound in a break between phrases (coughs most)
+PRESENCE = ('rustle', 'pew', 'pew')          # the faint audience under the whole piece
 LIVELY = 0.35        # the default: a well-behaved audience that is still there
 # How liveliness (0 nobody .. 1 a badly behaved audience) sets things:
 def every(l): return 40 - 32 * l             # seconds: one sound in a break at most this often
@@ -291,9 +331,41 @@ def conductor_line(take: Path, ir: np.ndarray, seed: int) -> np.ndarray:
     return _at(out, CONDUCTOR_LUFS)
 
 
+# How the audience answers the performance (quality 0..1, from the choir's and
+# accompanist's skill, finish.py): a good one gets the applause asked for; a
+# fair one polite applause, shorter the worse it was; a poor one scattered
+# applause; below that, or a piece that fell apart, bewildered applause or one
+# person clapping alone. Below BRAVO_BELOW, now and then (BRAVO_CHANCE)
+# someone shouts "Bravo!" into it anyway. Never boos.
+GOOD, FAIR, POOR = 0.6, 0.3, 0.1
+BRAVO_BELOW, BRAVO_CHANCE = 0.2, 0.25
+
+
+def reaction(quality: float, fell_apart: bool, asked: str, rng) -> list[tuple[str, float, float | None, float]]:
+    """What the audience does at the end: [(kind, seconds after the music ends, longest it lasts or None, dB)]."""
+    if quality >= GOOD and not fell_apart:
+        return [(asked, 0.0, None, 0.0)]
+    if quality >= FAIR and not fell_apart:                                    # polite, shorter, a little quieter
+        return [('applause' if asked == 'applause_finale' else asked, 0.3, 5 + 10 * (quality - FAIR) / (GOOD - FAIR),
+                 -3 * (GOOD - quality) / (GOOD - FAIR))]
+    if quality >= POOR and not fell_apart:
+        out = [('applause_scattered', rng.uniform(0.6, 1.5), None, 0.0)]
+    else:
+        wait = rng.uniform(1.5, 3.0)                                           # nobody's sure it's over
+        out = [('applause_bewildered' if rng.random() < 0.6 else 'applause_one', wait, None, 0.0)]
+    if quality < BRAVO_BELOW and rng.random() < BRAVO_CHANCE:                 # someone loved it
+        out.append(('bravo', out[0][1] + rng.uniform(0.3, 1.2), None, 0.0))
+    return out
+
+
+# A kind with no takes picked yet stands in as a short, quiet hesitant applause
+STAND_IN = {'applause_scattered': (4.0, -5.0), 'applause_bewildered': (3.0, -8.0), 'applause_one': (2.5, -10.0)}
+
+
 def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: dict[str, list[Path]], seed: int = 0,
          liveliness: float = LIVELY, applause_kind: str = 'applause', room_name: str = 'church',
-         intro: Path | None = None, events: list | None = None, crowd: float = 1.0) -> np.ndarray:
+         intro: Path | None = None, events: list | None = None, crowd: float = 1.0, quality: float = 1.0,
+         fell_apart: bool = False) -> np.ndarray:
     """The church mix (music at -20 LUFS, its score's 0 at offset seconds) heard
     live at a liveliness from 0 (nobody: the room's air alone) to 1 (a badly
     behaved audience): the stage settling as they're about to begin, carrying
@@ -305,7 +377,8 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
     Without one he's still there: the baton (most of the time) before the
     first note. crowd scales how many people there are (1 the size the levels
     were set at): more small sounds, a slightly louder hall, fuller applause.
-    events, if given, collects (seconds, kind) of each sound placed."""
+    events, if given, collects (seconds, kind) of each sound placed. quality
+    (0..1) and fell_apart set how they answer it at the end (reaction())."""
     from scipy.signal import butter, sosfilt
     from chorale import room
     ir = room.impulse(room.ROOMS[room_name])
@@ -332,8 +405,25 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
     pre = PRE if speech is None else INTRO_IN + len(speech) / SR + INTRO_HUSH + PAGE_AFTER + BATON_BEFORE + 0.6
     start = pre + offset + (phrases[0][0] if phrases else 0.0)        # the first note
     last_end = pre + offset + (phrases[-1][1] if phrases else len(music) / SR)
-    applause = pick(applause_kind) if l > 0 else None
     clap_at = last_end + 1.0                      # while the last chord is dying away
+    answer = reaction(quality, fell_apart, applause_kind, rng) if l > 0 else []
+    pieces = []
+    for kind, after, longest, db in answer:
+        x = pick(kind, db)
+        if x is None and kind in STAND_IN:
+            longest, extra = STAND_IN[kind]
+            x = pick('applause_hesitant', db + extra)
+        if x is None:
+            continue
+        if longest is not None and len(x) > longest * SR:
+            x = end_fade(x[:int(longest * SR)].copy(), min(2.0, longest / 3))
+        pieces.append((kind, after, x))
+    applause = None
+    if pieces:
+        applause = np.zeros((max(int(after * SR) + len(x) for _, after, x in pieces), 2))
+        for kind, after, x in pieces:
+            i = int(after * SR); applause[i:i + len(x)] += x
+    full = bool(answer) and answer[0][0] == applause_kind and answer[0][2] is None   # a real ovation: more hands for more people
     clap_end = clap_at + (sounding(applause) if applause is not None else 0.0)
     n = max(int(pre * SR) + len(music), int((clap_end + TAIL_S) * SR))
     out = np.zeros((n, 2))
@@ -359,7 +449,7 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
         if x is not None:
             hall[:min(len(hall), len(x))] += x[:len(hall)]
         for _ in range(int(2 + 3 * l)):
-            x = pick(('seats', 'rustle')[rng.integers(2)], up)
+            x = pick(('pew', 'rustle')[rng.integers(2)], up)
             if x is not None:
                 at = rng.uniform(0, start)
                 x = end_fade(x[:max(1, len(hall) - int(at * SR))], 0.2)
@@ -367,7 +457,7 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
         if speech is not None:
             # nobody quite listening while he talks: the hall's own shifting goes on under him
             for _ in range(int(2 + 4 * l)):
-                x = pick(('seats', 'rustle', 'settle')[rng.integers(3)], up + UNSETTLED_DB)
+                x = pick(('pew', 'rustle', 'settle')[rng.integers(3)], up + UNSETTLED_DB)
                 if x is not None:
                     at = rng.uniform(0, INTRO_IN + len(speech) / SR)
                     x = end_fade(x[:max(1, len(hall) - int(at * SR))], 0.2)
@@ -441,7 +531,7 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
             if t < span_end:
                 times.append(t)
         for at in times:
-            kind = ('cough', 'cough', 'seats', 'rustle')[rng.integers(4)]
+            kind = ('cough', 'cough', 'pew', 'rustle')[rng.integers(4)]
             x = pick(kind, up + 2)
             if x is not None:
                 place(out, end_fade(x, 0.15), at, rng.uniform(-0.9, 0.9)); log(at, f'{kind} (let go as it ends)')
@@ -459,8 +549,10 @@ def live(music: np.ndarray, phrases: list[list[float]], offset: float, chosen: d
             if x is not None:
                 place(out, x, at, 0.05); log(at, kind)
     if applause is not None:
-        place(out, applause, clap_at, 0.0); log(clap_at, applause_kind)
-        if crowd > 1.15 and len(chosen.get(applause_kind, [])) > 1:
+        place(out, applause, clap_at, 0.0)
+        for kind, after, _ in pieces:
+            log(clap_at + after, kind)
+        if full and crowd > 1.15 and len(chosen.get(applause_kind, [])) > 1:
             # more hands: a second take under the first, a moment behind it
             more = pick(applause_kind, 10 * np.log10(crowd - 1))
             if more is not None:
