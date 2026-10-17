@@ -1,0 +1,12 @@
+{
+ "name": "vs-m6-row-vibrato",
+ "lang": "en",
+ "low": 45,
+ "high": 65,
+ "median": 55,
+ "source": "VocalSet m6_row_vibrato",
+ "dir": "engine/voices/vs-m6-row-vibrato",
+ "sex": "M",
+ "type": "baritone",
+ "reach": 2
+}

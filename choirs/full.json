@@ -1,0 +1,6 @@
+{
+ "Soprano": ["vs-f1-dona-straight", "vs-f2-dona-straight", "vs-f3-dona-straight", "vs-f4-dona-straight", "vs-f6-dona-straight"],
+ "Alto": ["vs-f5-dona-straight", "vs-f8-dona-straight", "vs-m9-dona-straight", "vs-f7-dona-straight", "vs-f9-dona-straight"],
+ "Tenor": ["vs-m2-dona-straight", "vs-m3-dona-straight", "vs-m7-dona-straight", "vs-m11-dona-straight", "vs-m1-dona-straight"],
+ "Bass": ["vs-m8-dona-straight", "vs-m4-dona-straight", "vs-m10-dona-straight", "vs-m5-dona-straight", "vs-m6-dona-straight"]
+}

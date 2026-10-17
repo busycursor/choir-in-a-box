@@ -1,0 +1,12 @@
+{
+ "name": "vs-f4-row-vibrato",
+ "lang": "en",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f4_row_vibrato",
+ "dir": "engine/voices/vs-f4-row-vibrato",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}

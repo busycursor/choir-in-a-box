@@ -1,0 +1,12 @@
+{
+ "name": "vs-m8-dona-straight",
+ "lang": "it",
+ "low": 40,
+ "high": 62,
+ "median": 51,
+ "source": "VocalSet m8_dona_straight",
+ "dir": "engine/voices/vs-m8-dona-straight",
+ "sex": "M",
+ "type": "bass",
+ "reach": 2
+}

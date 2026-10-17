@@ -1,0 +1,12 @@
+{
+ "name": "vs-f8-row-vibrato",
+ "lang": "en",
+ "low": 57,
+ "high": 77,
+ "median": 67,
+ "source": "VocalSet f8_row_vibrato",
+ "dir": "engine/voices/vs-f8-row-vibrato",
+ "sex": "F",
+ "type": "mezzo-soprano",
+ "reach": 2
+}

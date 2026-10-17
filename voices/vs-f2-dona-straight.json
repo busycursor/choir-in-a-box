@@ -1,0 +1,12 @@
+{
+ "name": "vs-f2-dona-straight",
+ "lang": "it",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f2_dona_straight",
+ "dir": "engine/voices/vs-f2-dona-straight",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}

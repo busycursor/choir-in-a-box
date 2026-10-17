@@ -1,0 +1,12 @@
+{
+ "name": "vs-f4-caro-straight",
+ "lang": "it",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f4_caro_straight",
+ "dir": "engine/voices/vs-f4-caro-straight",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}

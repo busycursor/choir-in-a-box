@@ -1,0 +1,12 @@
+{
+ "name": "vs-m9-row-straight",
+ "lang": "en",
+ "low": 55,
+ "high": 74,
+ "median": 64,
+ "source": "VocalSet m9_row_straight",
+ "dir": "engine/voices/vs-m9-row-straight",
+ "sex": "M",
+ "type": "countertenor",
+ "reach": 2
+}

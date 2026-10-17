@@ -1,0 +1,12 @@
+{
+ "name": "vs-m4-dona-straight",
+ "lang": "it",
+ "low": 40,
+ "high": 62,
+ "median": 51,
+ "source": "VocalSet m4_dona_straight",
+ "dir": "engine/voices/vs-m4-dona-straight",
+ "sex": "M",
+ "type": "bass(?)",
+ "reach": 2
+}

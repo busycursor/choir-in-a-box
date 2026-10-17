@@ -1,0 +1,12 @@
+{
+ "name": "vs-m4-row-straight",
+ "lang": "en",
+ "low": 40,
+ "high": 62,
+ "median": 51,
+ "source": "VocalSet m4_row_straight",
+ "dir": "engine/voices/vs-m4-row-straight",
+ "sex": "M",
+ "type": "bass(?)",
+ "reach": 2
+}

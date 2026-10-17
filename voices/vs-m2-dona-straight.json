@@ -1,0 +1,12 @@
+{
+ "name": "vs-m2-dona-straight",
+ "lang": "it",
+ "low": 48,
+ "high": 69,
+ "median": 58,
+ "source": "VocalSet m2_dona_straight",
+ "dir": "engine/voices/vs-m2-dona-straight",
+ "sex": "M",
+ "type": "tenor",
+ "reach": 2
+}

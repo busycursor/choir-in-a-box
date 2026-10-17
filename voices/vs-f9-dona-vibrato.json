@@ -1,0 +1,12 @@
+{
+ "name": "vs-f9-dona-vibrato",
+ "lang": "it",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f9_dona_vibrato",
+ "dir": "engine/voices/vs-f9-dona-vibrato",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}

@@ -1,0 +1,12 @@
+{
+ "name": "vs-m2-row-vibrato",
+ "lang": "en",
+ "low": 48,
+ "high": 69,
+ "median": 58,
+ "source": "VocalSet m2_row_vibrato",
+ "dir": "engine/voices/vs-m2-row-vibrato",
+ "sex": "M",
+ "type": "tenor",
+ "reach": 2
+}

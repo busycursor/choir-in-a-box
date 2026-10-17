@@ -1,0 +1,12 @@
+{
+ "name": "vs-f5-row-straight",
+ "lang": "en",
+ "low": 57,
+ "high": 77,
+ "median": 67,
+ "source": "VocalSet f5_row_straight",
+ "dir": "engine/voices/vs-f5-row-straight",
+ "sex": "F",
+ "type": "mezzo-soprano",
+ "reach": 2
+}

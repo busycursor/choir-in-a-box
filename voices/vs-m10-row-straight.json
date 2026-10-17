@@ -1,0 +1,12 @@
+{
+ "name": "vs-m10-row-straight",
+ "lang": "en",
+ "low": 41,
+ "high": 64,
+ "median": 52,
+ "source": "VocalSet m10_row_straight",
+ "dir": "engine/voices/vs-m10-row-straight",
+ "sex": "M",
+ "type": "bass-baritone",
+ "reach": 2
+}

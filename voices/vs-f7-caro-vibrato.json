@@ -1,0 +1,12 @@
+{
+ "name": "vs-f7-caro-vibrato",
+ "lang": "it",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f7_caro_vibrato",
+ "dir": "engine/voices/vs-f7-caro-vibrato",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}

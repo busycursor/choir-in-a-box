@@ -1,0 +1,12 @@
+{
+ "name": "vs-m6-dona-straight",
+ "lang": "it",
+ "low": 45,
+ "high": 65,
+ "median": 55,
+ "source": "VocalSet m6_dona_straight",
+ "dir": "engine/voices/vs-m6-dona-straight",
+ "sex": "M",
+ "type": "baritone",
+ "reach": 2
+}

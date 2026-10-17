@@ -1,0 +1,12 @@
+{
+ "name": "vs-m8-row-vibrato",
+ "lang": "en",
+ "low": 40,
+ "high": 62,
+ "median": 51,
+ "source": "VocalSet m8_row_vibrato",
+ "dir": "engine/voices/vs-m8-row-vibrato",
+ "sex": "M",
+ "type": "bass",
+ "reach": 2
+}

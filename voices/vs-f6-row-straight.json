@@ -1,0 +1,12 @@
+{
+ "name": "vs-f6-row-straight",
+ "lang": "en",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f6_row_straight",
+ "dir": "engine/voices/vs-f6-row-straight",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}

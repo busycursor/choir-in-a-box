@@ -1,0 +1,12 @@
+{
+ "name": "vs-f5-caro-vibrato",
+ "lang": "it",
+ "low": 57,
+ "high": 77,
+ "median": 67,
+ "source": "VocalSet f5_caro_vibrato",
+ "dir": "engine/voices/vs-f5-caro-vibrato",
+ "sex": "F",
+ "type": "mezzo-soprano",
+ "reach": 2
+}

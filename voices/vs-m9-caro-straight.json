@@ -1,0 +1,12 @@
+{
+ "name": "vs-m9-caro-straight",
+ "lang": "it",
+ "low": 55,
+ "high": 74,
+ "median": 64,
+ "source": "VocalSet m9_caro_straight",
+ "dir": "engine/voices/vs-m9-caro-straight",
+ "sex": "M",
+ "type": "countertenor",
+ "reach": 2
+}

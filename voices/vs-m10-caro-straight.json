@@ -1,0 +1,12 @@
+{
+ "name": "vs-m10-caro-straight",
+ "lang": "it",
+ "low": 41,
+ "high": 64,
+ "median": 52,
+ "source": "VocalSet m10_caro_straight",
+ "dir": "engine/voices/vs-m10-caro-straight",
+ "sex": "M",
+ "type": "bass-baritone",
+ "reach": 2
+}

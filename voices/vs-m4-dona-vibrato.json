@@ -1,0 +1,12 @@
+{
+ "name": "vs-m4-dona-vibrato",
+ "lang": "it",
+ "low": 40,
+ "high": 62,
+ "median": 51,
+ "source": "VocalSet m4_dona_vibrato",
+ "dir": "engine/voices/vs-m4-dona-vibrato",
+ "sex": "M",
+ "type": "bass(?)",
+ "reach": 2
+}

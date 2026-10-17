@@ -1,0 +1,12 @@
+{
+ "name": "vs-m6-row-straight",
+ "lang": "en",
+ "low": 45,
+ "high": 65,
+ "median": 55,
+ "source": "VocalSet m6_row_straight",
+ "dir": "engine/voices/vs-m6-row-straight",
+ "sex": "M",
+ "type": "baritone",
+ "reach": 2
+}

@@ -1,0 +1,12 @@
+{
+ "name": "vs-m11-row-straight",
+ "lang": "en",
+ "low": 48,
+ "high": 69,
+ "median": 58,
+ "source": "VocalSet m11_row_straight",
+ "dir": "engine/voices/vs-m11-row-straight",
+ "sex": "M",
+ "type": "tenor",
+ "reach": 2
+}

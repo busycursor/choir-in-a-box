@@ -1,0 +1,12 @@
+{
+ "name": "vs-m9-caro-vibrato",
+ "lang": "it",
+ "low": 55,
+ "high": 74,
+ "median": 64,
+ "source": "VocalSet m9_caro_vibrato",
+ "dir": "engine/voices/vs-m9-caro-vibrato",
+ "sex": "M",
+ "type": "countertenor",
+ "reach": 2
+}

@@ -1,0 +1,12 @@
+{
+ "name": "vs-m11-caro-straight",
+ "lang": "it",
+ "low": 48,
+ "high": 69,
+ "median": 58,
+ "source": "VocalSet m11_caro_straight",
+ "dir": "engine/voices/vs-m11-caro-straight",
+ "sex": "M",
+ "type": "tenor",
+ "reach": 2
+}

@@ -1,0 +1,12 @@
+{
+ "name": "vs-m7-dona-vibrato",
+ "lang": "it",
+ "low": 48,
+ "high": 69,
+ "median": 58,
+ "source": "VocalSet m7_dona_vibrato",
+ "dir": "engine/voices/vs-m7-dona-vibrato",
+ "sex": "M",
+ "type": "tenor(?)",
+ "reach": 2
+}

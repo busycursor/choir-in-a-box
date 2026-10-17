@@ -1,0 +1,12 @@
+{
+ "name": "vs-f3-dona-vibrato",
+ "lang": "it",
+ "low": 60,
+ "high": 81,
+ "median": 70,
+ "source": "VocalSet f3_dona_vibrato",
+ "dir": "engine/voices/vs-f3-dona-vibrato",
+ "sex": "F",
+ "type": "soprano",
+ "reach": 2
+}
